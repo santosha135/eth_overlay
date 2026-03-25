@@ -1,0 +1,256 @@
+[el-1-geth-lighthouse] INFO [02-27|16:23:52.004] Filtering pending transactions for active bucket activeBucket=3
+[el-1-geth-lighthouse] INFO [02-27|16:23:52.004] Pending blob transactions before bucket filtering blob=0
+[el-1-geth-lighthouse] INFO [02-27|16:23:54.003] Stopping work on payload                 id=0x031b8d52f2464b21 reason=delivery
+[el-1-geth-lighthouse] INFO [02-27|16:23:54.128] Imported new potential chain segment     number=4 hash=d62bea..433104 blocks=1 txs=0 mgas=0.000 elapsed="335.928µs" mgasps=0.000 triediffs=13.98KiB triedirty=0.00B
+[el-1-geth-lighthouse] INFO [02-27|16:23:54.133] Chain head was updated                   number=4 hash=d62bea..433104 root=0aa773..4f1a01 elapsed="39.135µs"
+[el-1-geth-lighthouse] WARN [02-27|16:23:54.133] Nil finalized block cannot evict old blobs
+[el-1-geth-lighthouse] INFO [02-27|16:24:02.001] Starting work on payload                 id=0x03c43cd0b79f861b
+[el-1-geth-lighthouse] INFO [02-27|16:24:02.001] Checking leader gating for active bucket epoch=4 activeBucket=4 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:02.001] Filtering pending transactions for active bucket activeBucket=4
+[el-1-geth-lighthouse] INFO [02-27|16:24:02.001] Pending transactions before bucket filtering plain=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:02.001] Checking leader gating for active bucket epoch=4 activeBucket=4 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:02.001] Filtering pending transactions for active bucket activeBucket=4
+[el-1-geth-lighthouse] INFO [02-27|16:24:02.001] Pending blob transactions before bucket filtering blob=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:02.002] Updated payload                          id=0x03c43cd0b79f861b number=5 hash=317d67..2d2a54 txs=0 withdrawals=0 gas=0 fees=0 root=a702bb..cbadc7 elapsed="403.758µs"
+[el-1-geth-lighthouse] INFO [02-27|16:24:04.002] Checking leader gating for active bucket epoch=4 activeBucket=4 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:04.002] Filtering pending transactions for active bucket activeBucket=4
+[el-1-geth-lighthouse] INFO [02-27|16:24:04.002] Pending transactions before bucket filtering plain=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:04.002] Checking leader gating for active bucket epoch=4 activeBucket=4 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:04.002] Filtering pending transactions for active bucket activeBucket=4
+[el-1-geth-lighthouse] INFO [02-27|16:24:04.002] Pending blob transactions before bucket filtering blob=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:06.003] Checking leader gating for active bucket epoch=4 activeBucket=4 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:06.003] Filtering pending transactions for active bucket activeBucket=4
+[el-1-geth-lighthouse] INFO [02-27|16:24:06.003] Pending transactions before bucket filtering plain=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:06.003] Checking leader gating for active bucket epoch=4 activeBucket=4 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:06.003] Filtering pending transactions for active bucket activeBucket=4
+[el-1-geth-lighthouse] INFO [02-27|16:24:06.003] Pending blob transactions before bucket filtering blob=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:06.004] Stopping work on payload                 id=0x03c43cd0b79f861b reason=delivery
+[el-1-geth-lighthouse] INFO [02-27|16:24:06.069] Checking leader gating for active bucket epoch=4 activeBucket=4 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:06.069] Filtering pending transactions for active bucket activeBucket=4
+[el-1-geth-lighthouse] INFO [02-27|16:24:06.069] Pending transactions before bucket filtering plain=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:06.069] Checking leader gating for active bucket epoch=4 activeBucket=4 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:06.069] Filtering pending transactions for active bucket activeBucket=4
+[el-1-geth-lighthouse] INFO [02-27|16:24:06.069] Pending blob transactions before bucket filtering blob=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:06.139] Adding transactions to pool              count=1
+[el-1-geth-lighthouse] WARN [02-27|16:24:06.139] Served eth_sendRawTransaction            conn=172.16.0.14:34870 reqid=8 duration="295.764µs" err="rejected: bytecode hard-codes blocked address 0x8943545177806ED17B9F23F0a21ee5948eCaa776"
+[el-1-geth-lighthouse] INFO [02-27|16:24:06.144] Imported new potential chain segment     number=5 hash=317d67..2d2a54 blocks=1 txs=0 mgas=0.000 elapsed="381.459µs" mgasps=0.000 triediffs=17.39KiB triedirty=0.00B
+[el-1-geth-lighthouse] INFO [02-27|16:24:06.148] Chain head was updated                   number=5 hash=317d67..2d2a54 root=a702bb..cbadc7 elapsed="38.148µs"
+[el-1-geth-lighthouse] WARN [02-27|16:24:06.149] Nil finalized block cannot evict old blobs
+[el-1-geth-lighthouse] INFO [02-27|16:24:14.001] Starting work on payload                 id=0x0359ebad9555d226
+[el-1-geth-lighthouse] INFO [02-27|16:24:14.002] Checking leader gating for active bucket epoch=5 activeBucket=5 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:14.002] Filtering pending transactions for active bucket activeBucket=5
+[el-1-geth-lighthouse] INFO [02-27|16:24:14.002] Pending transactions before bucket filtering plain=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:14.002] Checking leader gating for active bucket epoch=5 activeBucket=5 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:14.002] Filtering pending transactions for active bucket activeBucket=5
+[el-1-geth-lighthouse] INFO [02-27|16:24:14.002] Pending blob transactions before bucket filtering blob=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:14.002] Updated payload                          id=0x0359ebad9555d226 number=6 hash=506478..0451b8 txs=0 withdrawals=0 gas=0 fees=0 root=d488d0..d25ccf elapsed="367.428µs"
+[el-1-geth-lighthouse] INFO [02-27|16:24:16.002] Checking leader gating for active bucket epoch=5 activeBucket=5 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:16.002] Filtering pending transactions for active bucket activeBucket=5
+[el-1-geth-lighthouse] INFO [02-27|16:24:16.002] Pending transactions before bucket filtering plain=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:16.002] Checking leader gating for active bucket epoch=5 activeBucket=5 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:16.002] Filtering pending transactions for active bucket activeBucket=5
+[el-1-geth-lighthouse] INFO [02-27|16:24:16.002] Pending blob transactions before bucket filtering blob=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:18.002] Stopping work on payload                 id=0x0359ebad9555d226 reason=delivery
+[el-1-geth-lighthouse] INFO [02-27|16:24:18.119] Imported new potential chain segment     number=6 hash=506478..0451b8 blocks=1 txs=0 mgas=0.000 elapsed="399.82µs"  mgasps=0.000 triediffs=20.56KiB triedirty=0.00B
+[el-1-geth-lighthouse] INFO [02-27|16:24:18.123] Chain head was updated                   number=6 hash=506478..0451b8 root=d488d0..d25ccf elapsed="31.757µs"
+[el-1-geth-lighthouse] WARN [02-27|16:24:18.123] Nil finalized block cannot evict old blobs
+[el-1-geth-lighthouse] INFO [02-27|16:24:26.002] Starting work on payload                 id=0x03fd31c1d1df580e
+[el-1-geth-lighthouse] INFO [02-27|16:24:26.002] Checking leader gating for active bucket epoch=6 activeBucket=6 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:26.002] Filtering pending transactions for active bucket activeBucket=6
+[el-1-geth-lighthouse] INFO [02-27|16:24:26.002] Pending transactions before bucket filtering plain=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:26.002] Checking leader gating for active bucket epoch=6 activeBucket=6 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:26.002] Filtering pending transactions for active bucket activeBucket=6
+[el-1-geth-lighthouse] INFO [02-27|16:24:26.002] Pending blob transactions before bucket filtering blob=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:26.002] Updated payload                          id=0x03fd31c1d1df580e number=7 hash=5da91e..fc5f6f txs=0 withdrawals=0 gas=0 fees=0 root=ceaf42..133825 elapsed="406.589µs"
+[el-1-geth-lighthouse] INFO [02-27|16:24:28.003] Checking leader gating for active bucket epoch=6 activeBucket=6 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:28.003] Filtering pending transactions for active bucket activeBucket=6
+[el-1-geth-lighthouse] INFO [02-27|16:24:28.003] Pending transactions before bucket filtering plain=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:28.003] Checking leader gating for active bucket epoch=6 activeBucket=6 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:28.003] Filtering pending transactions for active bucket activeBucket=6
+[el-1-geth-lighthouse] INFO [02-27|16:24:28.003] Pending blob transactions before bucket filtering blob=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:30.003] Stopping work on payload                 id=0x03fd31c1d1df580e reason=delivery
+[el-1-geth-lighthouse] INFO [02-27|16:24:30.118] Imported new potential chain segment     number=7 hash=5da91e..fc5f6f blocks=1 txs=0 mgas=0.000 elapsed=1.394ms     mgasps=0.000 triediffs=23.95KiB triedirty=0.00B
+[el-1-geth-lighthouse] INFO [02-27|16:24:30.122] Chain head was updated                   number=7 hash=5da91e..fc5f6f root=ceaf42..133825 elapsed="32.226µs"
+[el-1-geth-lighthouse] WARN [02-27|16:24:30.122] Nil finalized block cannot evict old blobs
+[el-1-geth-lighthouse] INFO [02-27|16:24:38.002] Starting work on payload                 id=0x03f7c2bfc8fec805
+[el-1-geth-lighthouse] INFO [02-27|16:24:38.002] Checking leader gating for active bucket epoch=7 activeBucket=7 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:38.002] Filtering pending transactions for active bucket activeBucket=7
+[el-1-geth-lighthouse] INFO [02-27|16:24:38.002] Pending transactions before bucket filtering plain=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:38.002] Checking leader gating for active bucket epoch=7 activeBucket=7 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:38.002] Filtering pending transactions for active bucket activeBucket=7
+[el-1-geth-lighthouse] INFO [02-27|16:24:38.002] Pending blob transactions before bucket filtering blob=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:38.002] Updated payload                          id=0x03f7c2bfc8fec805 number=8 hash=128b30..6fe742 txs=0 withdrawals=0 gas=0 fees=0 root=e7d99d..bf6fbb elapsed="325.963µs"
+[el-1-geth-lighthouse] INFO [02-27|16:24:40.003] Checking leader gating for active bucket epoch=7 activeBucket=7 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:40.003] Filtering pending transactions for active bucket activeBucket=7
+[el-1-geth-lighthouse] INFO [02-27|16:24:40.003] Pending transactions before bucket filtering plain=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:40.003] Checking leader gating for active bucket epoch=7 activeBucket=7 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:40.003] Filtering pending transactions for active bucket activeBucket=7
+[el-1-geth-lighthouse] INFO [02-27|16:24:40.003] Pending blob transactions before bucket filtering blob=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:42.003] Stopping work on payload                 id=0x03f7c2bfc8fec805 reason=delivery
+[el-1-geth-lighthouse] INFO [02-27|16:24:42.220] Imported new potential chain segment     number=8 hash=128b30..6fe742 blocks=1 txs=0 mgas=0.000 elapsed="508.227µs" mgasps=0.000 triediffs=27.51KiB triedirty=0.00B
+[el-1-geth-lighthouse] INFO [02-27|16:24:42.226] Chain head was updated                   number=8 hash=128b30..6fe742 root=e7d99d..bf6fbb elapsed="41.036µs"
+[el-1-geth-lighthouse] WARN [02-27|16:24:42.227] Nil finalized block cannot evict old blobs
+[el-1-geth-lighthouse] INFO [02-27|16:24:50.002] Starting work on payload                 id=0x0386b4e6d297b99b
+[el-1-geth-lighthouse] INFO [02-27|16:24:50.002] Checking leader gating for active bucket epoch=8 activeBucket=8 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:50.002] Filtering pending transactions for active bucket activeBucket=8
+[el-1-geth-lighthouse] INFO [02-27|16:24:50.002] Pending transactions before bucket filtering plain=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:50.002] Checking leader gating for active bucket epoch=8 activeBucket=8 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:50.002] Filtering pending transactions for active bucket activeBucket=8
+[el-1-geth-lighthouse] INFO [02-27|16:24:50.002] Pending blob transactions before bucket filtering blob=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:50.002] Updated payload                          id=0x0386b4e6d297b99b number=9 hash=9022db..9888b4 txs=0 withdrawals=0 gas=0 fees=0 root=182b59..e18e73 elapsed="389.556µs"
+[el-1-geth-lighthouse] INFO [02-27|16:24:52.003] Checking leader gating for active bucket epoch=8 activeBucket=8 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:52.003] Filtering pending transactions for active bucket activeBucket=8
+[el-1-geth-lighthouse] INFO [02-27|16:24:52.003] Pending transactions before bucket filtering plain=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:52.003] Checking leader gating for active bucket epoch=8 activeBucket=8 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:52.003] Filtering pending transactions for active bucket activeBucket=8
+[el-1-geth-lighthouse] INFO [02-27|16:24:52.003] Pending blob transactions before bucket filtering blob=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:54.004] Checking leader gating for active bucket epoch=8 activeBucket=8 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:54.004] Filtering pending transactions for active bucket activeBucket=8
+[el-1-geth-lighthouse] INFO [02-27|16:24:54.004] Pending transactions before bucket filtering plain=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:54.004] Checking leader gating for active bucket epoch=8 activeBucket=8 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:54.004] Filtering pending transactions for active bucket activeBucket=8
+[el-1-geth-lighthouse] INFO [02-27|16:24:54.004] Pending blob transactions before bucket filtering blob=0
+[el-1-geth-lighthouse] INFO [02-27|16:24:54.004] Stopping work on payload                 id=0x0386b4e6d297b99b reason=delivery
+[el-1-geth-lighthouse] INFO [02-27|16:24:54.114] Imported new potential chain segment     number=9 hash=9022db..9888b4 blocks=1 txs=0 mgas=0.000 elapsed="477.72µs"  mgasps=0.000 triediffs=31.17KiB triedirty=0.00B
+[el-1-geth-lighthouse] INFO [02-27|16:24:54.119] Chain head was updated                   number=9 hash=9022db..9888b4 root=182b59..e18e73 elapsed="32.432µs"
+[el-1-geth-lighthouse] WARN [02-27|16:24:54.119] Nil finalized block cannot evict old blobs
+[el-1-geth-lighthouse] INFO [02-27|16:25:02.001] Starting work on payload                 id=0x034d98c9c77b865c
+[el-1-geth-lighthouse] INFO [02-27|16:25:02.001] Checking leader gating for active bucket epoch=9 activeBucket=9 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:02.001] Filtering pending transactions for active bucket activeBucket=9
+[el-1-geth-lighthouse] INFO [02-27|16:25:02.001] Pending transactions before bucket filtering plain=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:02.001] Checking leader gating for active bucket epoch=9 activeBucket=9 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:02.001] Filtering pending transactions for active bucket activeBucket=9
+[el-1-geth-lighthouse] INFO [02-27|16:25:02.001] Pending blob transactions before bucket filtering blob=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:02.001] Updated payload                          id=0x034d98c9c77b865c number=10 hash=b69f51..5a297c txs=0 withdrawals=0 gas=0 fees=0 root=b5f194..3c30f7 elapsed="318.557µs"
+[el-1-geth-lighthouse] INFO [02-27|16:25:04.002] Checking leader gating for active bucket epoch=9 activeBucket=9 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:04.002] Filtering pending transactions for active bucket activeBucket=9
+[el-1-geth-lighthouse] INFO [02-27|16:25:04.002] Pending transactions before bucket filtering plain=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:04.002] Checking leader gating for active bucket epoch=9 activeBucket=9 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:04.002] Filtering pending transactions for active bucket activeBucket=9
+[el-1-geth-lighthouse] INFO [02-27|16:25:04.002] Pending blob transactions before bucket filtering blob=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:06.003] Checking leader gating for active bucket epoch=9 activeBucket=9 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:06.003] Filtering pending transactions for active bucket activeBucket=9
+[el-1-geth-lighthouse] INFO [02-27|16:25:06.003] Pending transactions before bucket filtering plain=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:06.003] Checking leader gating for active bucket epoch=9 activeBucket=9 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:06.003] Filtering pending transactions for active bucket activeBucket=9
+[el-1-geth-lighthouse] INFO [02-27|16:25:06.003] Pending blob transactions before bucket filtering blob=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:06.005] Stopping work on payload                 id=0x034d98c9c77b865c reason=delivery
+[el-1-geth-lighthouse] INFO [02-27|16:25:06.094] Imported new potential chain segment     number=10 hash=b69f51..5a297c blocks=1 txs=0 mgas=0.000 elapsed="496.952µs" mgasps=0.000 triediffs=34.89KiB triedirty=0.00B
+[el-1-geth-lighthouse] INFO [02-27|16:25:06.101] Chain head was updated                   number=10 hash=b69f51..5a297c root=b5f194..3c30f7 elapsed="37.126µs"
+[el-1-geth-lighthouse] WARN [02-27|16:25:06.101] Nil finalized block cannot evict old blobs
+[el-1-geth-lighthouse] INFO [02-27|16:25:14.001] Starting work on payload                 id=0x03fd2a3dac537911
+[el-1-geth-lighthouse] INFO [02-27|16:25:14.001] Checking leader gating for active bucket epoch=10 activeBucket=0 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:14.001] Filtering pending transactions for active bucket activeBucket=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:14.001] Pending transactions before bucket filtering plain=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:14.001] Checking leader gating for active bucket epoch=10 activeBucket=0 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:14.001] Filtering pending transactions for active bucket activeBucket=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:14.001] Pending blob transactions before bucket filtering blob=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:14.002] Updated payload                          id=0x03fd2a3dac537911 number=11 hash=9083db..8af862 txs=0 withdrawals=0 gas=0 fees=0 root=1c5c79..8cb2f6 elapsed="616.943µs"
+[el-1-geth-lighthouse] INFO [02-27|16:25:16.002] Checking leader gating for active bucket epoch=10 activeBucket=0 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:16.002] Filtering pending transactions for active bucket activeBucket=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:16.002] Pending transactions before bucket filtering plain=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:16.002] Checking leader gating for active bucket epoch=10 activeBucket=0 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:16.002] Filtering pending transactions for active bucket activeBucket=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:16.002] Pending blob transactions before bucket filtering blob=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:18.003] Checking leader gating for active bucket epoch=10 activeBucket=0 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:18.003] Filtering pending transactions for active bucket activeBucket=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:18.003] Pending transactions before bucket filtering plain=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:18.003] Checking leader gating for active bucket epoch=10 activeBucket=0 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:18.003] Filtering pending transactions for active bucket activeBucket=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:18.003] Pending blob transactions before bucket filtering blob=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:18.003] Stopping work on payload                 id=0x03fd2a3dac537911 reason=delivery
+[el-1-geth-lighthouse] INFO [02-27|16:25:18.120] Imported new potential chain segment     number=11 hash=9083db..8af862 blocks=1 txs=0 mgas=0.000 elapsed="376.812µs" mgasps=0.000 triediffs=38.50KiB triedirty=0.00B
+[el-1-geth-lighthouse] INFO [02-27|16:25:18.125] Chain head was updated                   number=11 hash=9083db..8af862 root=1c5c79..8cb2f6 elapsed="41.897µs"
+[el-1-geth-lighthouse] WARN [02-27|16:25:18.126] Nil finalized block cannot evict old blobs
+[el-1-geth-lighthouse] INFO [02-27|16:25:26.002] Starting work on payload                 id=0x03ca92cdef7c5a50
+[el-1-geth-lighthouse] INFO [02-27|16:25:26.002] Checking leader gating for active bucket epoch=11 activeBucket=1 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:26.002] Filtering pending transactions for active bucket activeBucket=1
+[el-1-geth-lighthouse] INFO [02-27|16:25:26.002] Pending transactions before bucket filtering plain=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:26.002] Checking leader gating for active bucket epoch=11 activeBucket=1 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:26.002] Filtering pending transactions for active bucket activeBucket=1
+[el-1-geth-lighthouse] INFO [02-27|16:25:26.002] Pending blob transactions before bucket filtering blob=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:26.002] Updated payload                          id=0x03ca92cdef7c5a50 number=12 hash=b55d63..0dded9 txs=0 withdrawals=0 gas=0 fees=0 root=2a5582..30463b elapsed="337.959µs"
+[el-1-geth-lighthouse] INFO [02-27|16:25:28.003] Checking leader gating for active bucket epoch=11 activeBucket=1 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:28.003] Filtering pending transactions for active bucket activeBucket=1
+[el-1-geth-lighthouse] INFO [02-27|16:25:28.003] Pending transactions before bucket filtering plain=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:28.003] Checking leader gating for active bucket epoch=11 activeBucket=1 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:28.003] Filtering pending transactions for active bucket activeBucket=1
+[el-1-geth-lighthouse] INFO [02-27|16:25:28.003] Pending blob transactions before bucket filtering blob=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:30.003] Stopping work on payload                 id=0x03ca92cdef7c5a50 reason=delivery
+[el-1-geth-lighthouse] INFO [02-27|16:25:30.110] Imported new potential chain segment     number=12 hash=b55d63..0dded9 blocks=1 txs=0 mgas=0.000 elapsed="426.688µs" mgasps=0.000 triediffs=42.51KiB triedirty=0.00B
+[el-1-geth-lighthouse] INFO [02-27|16:25:30.115] Chain head was updated                   number=12 hash=b55d63..0dded9 root=2a5582..30463b elapsed="35.746µs"
+[el-1-geth-lighthouse] WARN [02-27|16:25:30.115] Nil finalized block cannot evict old blobs
+[el-1-geth-lighthouse] INFO [02-27|16:25:38.002] Starting work on payload                 id=0x0357a83d27f378d6
+[el-1-geth-lighthouse] INFO [02-27|16:25:38.002] Checking leader gating for active bucket epoch=12 activeBucket=2 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:38.002] Filtering pending transactions for active bucket activeBucket=2
+[el-1-geth-lighthouse] INFO [02-27|16:25:38.002] Pending transactions before bucket filtering plain=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:38.002] Checking leader gating for active bucket epoch=12 activeBucket=2 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:38.002] Filtering pending transactions for active bucket activeBucket=2
+[el-1-geth-lighthouse] INFO [02-27|16:25:38.002] Pending blob transactions before bucket filtering blob=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:38.002] Updated payload                          id=0x0357a83d27f378d6 number=13 hash=25935f..e58992 txs=0 withdrawals=0 gas=0 fees=0 root=d07c81..aadc34 elapsed="379.104µs"
+[el-1-geth-lighthouse] INFO [02-27|16:25:40.003] Checking leader gating for active bucket epoch=12 activeBucket=2 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:40.003] Filtering pending transactions for active bucket activeBucket=2
+[el-1-geth-lighthouse] INFO [02-27|16:25:40.003] Pending transactions before bucket filtering plain=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:40.003] Checking leader gating for active bucket epoch=12 activeBucket=2 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:40.003] Filtering pending transactions for active bucket activeBucket=2
+[el-1-geth-lighthouse] INFO [02-27|16:25:40.003] Pending blob transactions before bucket filtering blob=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:42.003] Stopping work on payload                 id=0x0357a83d27f378d6 reason=delivery
+[el-1-geth-lighthouse] INFO [02-27|16:25:42.114] Imported new potential chain segment     number=13 hash=25935f..e58992 blocks=1 txs=0 mgas=0.000 elapsed="504.038µs" mgasps=0.000 triediffs=46.30KiB triedirty=0.00B
+[el-1-geth-lighthouse] INFO [02-27|16:25:42.120] Chain head was updated                   number=13 hash=25935f..e58992 root=d07c81..aadc34 elapsed="76.01µs"
+[el-1-geth-lighthouse] WARN [02-27|16:25:42.121] Nil finalized block cannot evict old blobs
+[el-1-geth-lighthouse] INFO [02-27|16:25:50.001] Starting work on payload                 id=0x03df311caffd0af6
+[el-1-geth-lighthouse] INFO [02-27|16:25:50.002] Checking leader gating for active bucket epoch=13 activeBucket=3 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:50.002] Filtering pending transactions for active bucket activeBucket=3
+[el-1-geth-lighthouse] INFO [02-27|16:25:50.002] Pending transactions before bucket filtering plain=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:50.002] Checking leader gating for active bucket epoch=13 activeBucket=3 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:50.002] Filtering pending transactions for active bucket activeBucket=3
+[el-1-geth-lighthouse] INFO [02-27|16:25:50.002] Pending blob transactions before bucket filtering blob=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:50.002] Updated payload                          id=0x03df311caffd0af6 number=14 hash=0a4e36..898230 txs=0 withdrawals=0 gas=0 fees=0 root=29c106..f94208 elapsed="451.543µs"
+[el-1-geth-lighthouse] INFO [02-27|16:25:52.003] Checking leader gating for active bucket epoch=13 activeBucket=3 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:52.003] Filtering pending transactions for active bucket activeBucket=3
+[el-1-geth-lighthouse] INFO [02-27|16:25:52.003] Pending transactions before bucket filtering plain=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:52.003] Checking leader gating for active bucket epoch=13 activeBucket=3 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:52.003] Filtering pending transactions for active bucket activeBucket=3
+[el-1-geth-lighthouse] INFO [02-27|16:25:52.003] Pending blob transactions before bucket filtering blob=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:53.615] Adding transactions to pool              count=1
+[el-1-geth-lighthouse] INFO [02-27|16:25:53.615] Assigning transaction to bucket          hash=e2a6e7..c7313a bucketID=8
+[el-1-geth-lighthouse] INFO [02-27|16:25:53.615] Submitted transaction                    hash=0xe2a6e77a2f86db22a551a2fe36f9b47420b41d1d36b7800ca0fc84fdd2c7313a from=0x8943545177806ED17B9F23F0a21ee5948eCaa776 nonce=0 recipient=0xb4B46bdAA835F8E4b4d8e208B6559cD267851051 value=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:53.641] Adding transactions to pool              count=1
+[el-1-geth-lighthouse] INFO [02-27|16:25:53.641] Assigning transaction to bucket          hash=f4dc43..d1a670 bucketID=2
+[el-1-geth-lighthouse] INFO [02-27|16:25:53.642] Submitted transaction                    hash=0xf4dc43531247952914fcad3829d9963707150df1aa45228f71ccd6cdc7d1a670 from=0x8943545177806ED17B9F23F0a21ee5948eCaa776 nonce=1 recipient=0xb4B46bdAA835F8E4b4d8e208B6559cD267851051 value=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:53.648] Adding transactions to pool              count=1
+[el-1-geth-lighthouse] INFO [02-27|16:25:53.648] Assigning transaction to bucket          hash=71a555..5a4035 bucketID=9
+[el-1-geth-lighthouse] INFO [02-27|16:25:53.648] Submitted transaction                    hash=0x71a555a25d2acc77a60e72ad71d4aa2ab90c934f647cce25e19d9f10b95a4035 from=0x8943545177806ED17B9F23F0a21ee5948eCaa776 nonce=2 recipient=0xb4B46bdAA835F8E4b4d8e208B6559cD267851051 value=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:53.686] Adding transactions to pool              count=1
+[el-1-geth-lighthouse] INFO [02-27|16:25:53.686] Assigning transaction to bucket          hash=db72d5..487553 bucketID=5
+[el-1-geth-lighthouse] INFO [02-27|16:25:53.687] Submitted transaction                    hash=0xdb72d5f0117e463bf38a2f3613dc81a19a4583cb0b65b3012f3c5ecfe1487553 from=0x8943545177806ED17B9F23F0a21ee5948eCaa776 nonce=3 recipient=0xb4B46bdAA835F8E4b4d8e208B6559cD267851051 value=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:53.710] Adding transactions to pool              count=1
+[el-1-geth-lighthouse] INFO [02-27|16:25:53.710] Assigning transaction to bucket          hash=5c7511..fe1a1e bucketID=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:53.710] Submitted transaction                    hash=0x5c75116acbb495087da2ba9155b0af3997e7768d40e038af6f7f9bf99efe1a1e from=0x8943545177806ED17B9F23F0a21ee5948eCaa776 nonce=4 recipient=0xb4B46bdAA835F8E4b4d8e208B6559cD267851051 value=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:53.727] Adding transactions to pool              count=1
+[el-1-geth-lighthouse] INFO [02-27|16:25:53.727] Assigning transaction to bucket          hash=fd5df3..d04fc0 bucketID=6
+[el-1-geth-lighthouse] INFO [02-27|16:25:53.727] Submitted transaction                    hash=0xfd5df3515d3d9e75c8de4b830e25ee849daed80ba4fbe295e999cc6cbdd04fc0 from=0x8943545177806ED17B9F23F0a21ee5948eCaa776 nonce=5 recipient=0xb4B46bdAA835F8E4b4d8e208B6559cD267851051 value=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:53.751] Adding transactions to pool              count=1
+[el-1-geth-lighthouse] INFO [02-27|16:25:53.751] Assigning transaction to bucket          hash=aab5c8..ba4a39 bucketID=3
+[el-1-geth-lighthouse] INFO [02-27|16:25:53.751] Submitted transaction                    hash=0xaab5c8068fcef7804edfb99214404304abf009a11f53b49178e849e8eaba4a39 from=0x8943545177806ED17B9F23F0a21ee5948eCaa776 nonce=6 recipient=0xb4B46bdAA835F8E4b4d8e208B6559cD267851051 value=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:53.774] Adding transactions to pool              count=1
+[el-1-geth-lighthouse] INFO [02-27|16:25:53.774] Assigning transaction to bucket          hash=a90b61..cf60a2 bucketID=8
+[el-1-geth-lighthouse] INFO [02-27|16:25:53.774] Submitted transaction                    hash=0xa90b61c5e08594a4fabafe7048c4a0f42e50cf0f2d3b7cfe69bb761426cf60a2 from=0x8943545177806ED17B9F23F0a21ee5948eCaa776 nonce=7 recipient=0xb4B46bdAA835F8E4b4d8e208B6559cD267851051 value=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:53.792] Adding transactions to pool              count=1
+[el-1-geth-lighthouse] INFO [02-27|16:25:53.792] Assigning transaction to bucket          hash=efefb5..dab32b bucketID=1
+[el-1-geth-lighthouse] INFO [02-27|16:25:53.792] Submitted transaction                    hash=0xefefb56d6a369363ea6fdd9054c36ab62a8981ad7725879b72164d4cacdab32b from=0x8943545177806ED17B9F23F0a21ee5948eCaa776 nonce=8 recipient=0xb4B46bdAA835F8E4b4d8e208B6559cD267851051 value=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:53.796] Adding transactions to pool              count=1
+[el-1-geth-lighthouse] INFO [02-27|16:25:53.796] Assigning transaction to bucket          hash=a8c5a9..0a031b bucketID=9
+[el-1-geth-lighthouse] INFO [02-27|16:25:53.796] Submitted transaction                    hash=0xa8c5a9e596801217423d2903003f49693c92d5ff9b46ec60b3ab7f62e50a031b from=0x8943545177806ED17B9F23F0a21ee5948eCaa776 nonce=9 recipient=0xb4B46bdAA835F8E4b4d8e208B6559cD267851051 value=0
+[el-1-geth-lighthouse] INFO [02-27|16:25:54.003] Stopping work on payload                 id=0x03df311caffd0af6 reason=delivery
+[el-1-geth-lighthouse] INFO [02-27|16:25:54.117] Imported new potential chain segment     number=14 hash=0a4e36..898230 blocks=1 txs=0 mgas=0.000 elapsed="413.664µs" mgasps=0.000 triediffs=50.26KiB triedirty=0.00B
+[el-1-geth-lighthouse] INFO [02-27|16:25:54.121] Chain head was updated                   number=14 hash=0a4e36..898230 root=29c106..f94208 elapsed="58.435µs"
+[el-1-geth-lighthouse] WARN [02-27|16:25:54.122] Nil finalized block cannot evict old blobs
+[el-1-geth-lighthouse] INFO [02-27|16:26:02.002] Starting work on payload                 id=0x039b658c3108baf1
+[el-1-geth-lighthouse] INFO [02-27|16:26:02.002] Checking leader gating for active bucket epoch=14 activeBucket=4 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:26:02.002] Filtering pending transactions for active bucket activeBucket=4
+[el-1-geth-lighthouse] INFO [02-27|16:26:02.002] Pending transactions before bucket filtering plain=0
+[el-1-geth-lighthouse] INFO [02-27|16:26:02.002] Checking leader gating for active bucket epoch=14 activeBucket=4 leaderIndex=0 myMemberIndex=0
+[el-1-geth-lighthouse] INFO [02-27|16:26:02.002] Filtering pending transactions for active bucket activeBucket=4
+[el-1-geth-lighthouse] INFO [02-27|16:26:02.002] Pending blob transactions before bucket filtering blob=0
+[el-1-geth-lighthouse] INFO [02-27|16:26:02.002] Updated payload                          id=0x039b658c3108baf1 number=15 hash=480268..38a978 txs=0 withdrawals=0 gas=0 fees=0 root=7c54e2..4f18c7 elapsed="606.636µs"

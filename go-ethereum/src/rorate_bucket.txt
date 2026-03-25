@@ -1,0 +1,65 @@
+package bucket
+
+import (
+	"encoding/binary"
+	"sync/atomic"
+
+	"github.com/ethereum/go-ethereum/common"
+)
+
+// Configurable constants
+const DefaultNumBuckets = 10
+
+// Scheduler defines how to compute "active bucket" for a node.
+type Scheduler struct {
+	numBuckets     uint64
+	groupID        uint64
+	rotationBlocks uint64 // rotate every N blocks
+
+	// atomic block number set by caller (txpool/miner)
+	headBlock atomic.Uint64
+}
+
+func NewScheduler(numBuckets int, groupID int, rotationBlocks uint64) *Scheduler {
+	if numBuckets <= 0 {
+		numBuckets = DefaultNumBuckets
+	}
+	if rotationBlocks == 0 {
+		rotationBlocks = 1
+	}
+	s := &Scheduler{
+		numBuckets:     uint64(numBuckets),
+		groupID:        uint64(groupID),
+		rotationBlocks: rotationBlocks,
+	}
+	s.headBlock.Store(0)
+	return s
+}
+
+// SetHeadBlock should be called whenever the chain head changes.
+func (s *Scheduler) SetHeadBlock(blockNumber uint64) {
+	s.headBlock.Store(blockNumber)
+}
+
+// Epoch is derived from head block number.
+func (s *Scheduler) Epoch() uint64 {
+	bn := s.headBlock.Load()
+	return bn / s.rotationBlocks
+}
+
+// ActiveBucket for this group at current epoch.
+func (s *Scheduler) ActiveBucket() int {
+	e := s.Epoch()
+	return int((e + s.groupID) % s.numBuckets)
+}
+
+// BucketForHash deterministically maps a tx hash to a bucket in [0, numBuckets).
+func BucketForHash(h common.Hash, numBuckets int) int {
+	nb := uint64(numBuckets)
+	if nb == 0 {
+		nb = DefaultNumBuckets
+	}
+	// Use last 8 bytes for stable fast mapping
+	v := binary.BigEndian.Uint64(h[24:32])
+	return int(v % nb)
+}

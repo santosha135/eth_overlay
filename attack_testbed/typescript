@@ -1,0 +1,746 @@
+Script started on 2026-02-20 13:17:46-05:00 [TERM="xterm" TTY="/dev/pts/5" COLUMNS="137" LINES="38"]
+]0;narwhal@santosh:~/attack_testbed[?2004h[narwhal@santosh attack_testbed]$ ls
+[?2004l Accept:                     create_account.mjs        mul_tx.mjs           process_transactions.py           [0m[01;32mtsconfig.json[0m
+ account_private_keys.json   fund.mjs                  [01;34mnode_modules[0m         [01;32mREADME.md[0m                         [01;34mtypechain-types[0m
+ account_setup.py           'hardhat.config copy.ts'   normal_mult_tx.mjs   replay_simulated_mempool_bak.py   typescript
+ [01;34martifacts[0m                   hardhat.config.ts         over_draft_tx.mjs    replay_simulated_mempool.py       User-Agent:
+ [01;34matttack_env[0m                 Host:                     [01;32mpackage.json[0m         [01;34mscripts[0m                           wallet_private_keys.json
+ [01;34mcache[0m                       [01;34mignition[0m                  [01;32mpackage-lock.json[0m    [01;34mtest[0m
+ Content-Length:             key.py                    parallel_ex2.mjs     tet_tx.mjs
+ Content-Type:               memory_purge_tx.mjs       parallel_ex.mjs      transaction.bin
+ [01;34mcontracts[0m                   mempool.csv               POST                 transaction.txt
+]0;narwhal@santosh:~/attack_testbed[?2004h[narwhal@santosh attack_testbed]$ cd scripts/
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ ls
+[?2004l block_tx_list.js       deploy_attack.ts   intract_sm_contract_fun.js      Resource_att_2.js            [0m[01;32mrun.sh[0m
+ block_with_status.js   deploy_seg.ts     'intract_with _sm_contract.js'   Resource_att.js              test.js
+ deploy_att_2.ts        deploy.ts          pending_tx_list.js              Resource_exhaust_Attack.js
+]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ [7mnpx hardhat run scripts/deploy_attack.ts --network localnet[27m[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cnpx hardhat run scripts/deploy_attack.ts --network localnet[K[K[K[K[K[K[K[K[7mlocal-eth-testnet[27mlocal-eth-testnet
+[?2004l[31m[1mError[22m[39m [31m[1mHH100:[22m[39m Network local-eth-testnet doesn't exist
+
+HardhatError: HH100: Network local-eth-testnet doesn't exist
+    at new Environment (/home/narwhal/attack_testbed/node_modules/hardhat/src/internal/core/runtime-environment.ts:91:13)
+    at main (/home/narwhal/attack_testbed/node_modules/hardhat/src/internal/cli/cli.ts:234:17)
+    at Object.<anonymous> (/home/narwhal/attack_testbed/node_modules/hardhat/src/internal/cli/cli.ts:483:1)
+    at Module._compile (node:internal/modules/cjs/loader:1521:14)
+    at Object.Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+    at Module.load (node:internal/modules/cjs/loader:1266:32)
+    at Function.Module._load (node:internal/modules/cjs/loader:1091:12)
+    at Module.require (node:internal/modules/cjs/loader:1289:19)
+    at require (node:internal/modules/helpers:182:18)
+    at Object.<anonymous> (/home/narwhal/attack_testbed/node_modules/hardhat/src/internal/cli/bootstrap.ts:16:1)
+]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ npx hardhat run scripts/deploy_attack.ts --network local-eth-testnet[K[K[K[K[K[K[K[K[K[K[Knry[K[Ket[1Pnet
+[?2004l[31m[1mError[22m[39m [31m[1mHH601:[22m[39m Script scripts/deploy_attack.ts doesn't exist.
+
+HardhatError: HH601: Script scripts/deploy_attack.ts doesn't exist.
+    at SimpleTaskDefinition.action (/home/narwhal/attack_testbed/node_modules/hardhat/src/builtin-tasks/run.ts:25:15)
+    at async Environment._runTaskDefinition (/home/narwhal/attack_testbed/node_modules/hardhat/src/internal/core/runtime-environment.ts:351:14)
+    at async Environment.run (/home/narwhal/attack_testbed/node_modules/hardhat/src/internal/core/runtime-environment.ts:184:14)
+    at async main (/home/narwhal/attack_testbed/node_modules/hardhat/src/internal/cli/cli.ts:325:7)
+]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ cd ..
+[?2004l]0;narwhal@santosh:~/attack_testbed[?2004h[narwhal@santosh attack_testbed]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed[?2004h[narwhal@santosh attack_testbed]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed[?2004h[narwhal@santosh attack_testbed]$ cd ..npx hardhat run scripts/deploy_attack.ts --network localnet-eth-testnet
+[?2004l[31m[1mError[22m[39m [31m[1mHH100:[22m[39m Network local-eth-testnet doesn't exist
+
+HardhatError: HH100: Network local-eth-testnet doesn't exist
+    at new Environment (/home/narwhal/attack_testbed/node_modules/hardhat/src/internal/core/runtime-environment.ts:91:13)
+    at main (/home/narwhal/attack_testbed/node_modules/hardhat/src/internal/cli/cli.ts:234:17)
+    at Object.<anonymous> (/home/narwhal/attack_testbed/node_modules/hardhat/src/internal/cli/cli.ts:483:1)
+    at Module._compile (node:internal/modules/cjs/loader:1521:14)
+    at Object.Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+    at Module.load (node:internal/modules/cjs/loader:1266:32)
+    at Function.Module._load (node:internal/modules/cjs/loader:1091:12)
+    at Module.require (node:internal/modules/cjs/loader:1289:19)
+    at require (node:internal/modules/helpers:182:18)
+    at Object.<anonymous> (/home/narwhal/attack_testbed/node_modules/hardhat/src/internal/cli/bootstrap.ts:16:1)
+]0;narwhal@santosh:~/attack_testbed[?2004h[narwhal@santosh attack_testbed]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed[?2004h[narwhal@santosh attack_testbed]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed[?2004h[narwhal@santosh attack_testbed]$ npx hardhat run scripts/deploy_attack.ts --network local-eth-testnet[K[K[K[K[K[K[K[K[K[K[K[Knet
+[?2004lDownloading compiler 0.8.28
+[1m[33mWarning:[39m[22m SPDX license identifier not provided in source file. Before publishing, consider adding a comment containing "SPDX-License-Identifier: <SPDX-License>" to each source file. Use "SPDX-License-Identifier: UNLICENSED" for non-open-source code. Please see https://spdx.org for more information.
+--> contracts/ConditionalExhaustCoinbaseVariant.sol
+
+
+[1m[33mWarning:[39m[22m SPDX license identifier not provided in source file. Before publishing, consider adding a comment containing "SPDX-License-Identifier: <SPDX-License>" to each source file. Use "SPDX-License-Identifier: UNLICENSED" for non-open-source code. Please see https://spdx.org for more information.
+--> contracts/seg_contract.sol
+
+
+[1m[33mWarning:[39m[22m Source file does not specify required compiler version! Consider adding "pragma solidity ^0.8.28;"
+--> contracts/seg_contract.sol
+
+
+[1m[33mWarning:[39m[22m Since the VM version paris, "difficulty" was replaced by "prevrandao", which now returns a random number based on the beacon chain.
+  --> contracts/CardDeck.sol:62:44:
+   |
+62 |                 keccak256(abi.encodePacked(block.difficulty, block.timestamp))
+   |                                            ^^^^^^^^^^^^^^^^
+
+
+[1m[33mWarning:[39m[22m Unnamed return variable can remain unassigned. Add an explicit return with value to all non-reverting code paths or name the variable.
+ --> contracts/seg_contract.sol:4:63:
+  |
+4 |     function f(uint x, uint[] calldata input) public returns (uint, uint) {
+  |                                                               ^^^^
+
+
+[1m[33mWarning:[39m[22m Unnamed return variable can remain unassigned. Add an explicit return with value to all non-reverting code paths or name the variable.
+ --> contracts/seg_contract.sol:4:69:
+  |
+4 |     function f(uint x, uint[] calldata input) public returns (uint, uint) {
+  |                                                                     ^^^^
+
+
+[1m[33mWarning:[39m[22m Unused function parameter. Remove or comment out the variable name to silence this warning.
+ --> contracts/seg_contract.sol:4:16:
+  |
+4 |     function f(uint x, uint[] calldata input) public returns (uint, uint) {
+  |                ^^^^^^
+
+
+[1m[33mWarning:[39m[22m Unused local variable.
+ --> contracts/seg_contract.sol:5:10:
+  |
+5 |         (uint a, uint[] calldata b) = fun(input, data);
+  |          ^^^^^^
+
+
+[1m[33mWarning:[39m[22m Unused local variable.
+ --> contracts/seg_contract.sol:5:18:
+  |
+5 |         (uint a, uint[] calldata b) = fun(input, data);
+  |                  ^^^^^^^^^^^^^^^^^
+
+
+[1m[33mWarning:[39m[22m Function state mutability can be restricted to view
+ --> contracts/seg_contract.sol:4:5:
+  |
+4 |     function f(uint x, uint[] calldata input) public returns (uint, uint) {
+  |     ^ (Relevant source part starts here and spans across multiple lines).
+
+
+[1m[33mWarning:[39m[22m Solver z3 was selected for SMTChecker but it is not available. libz3.so.4.12 was not found.
+
+
+[1m[33mWarning:[39m[22m CHC analysis was not possible since no Horn solver was found and enabled. The accepted solvers for CHC are Eldarica and z3.
+
+
+[1m[33mWarning:[39m[22m BMC analysis was not possible since no SMT solver was found and enabled. The accepted solvers for BMC are cvc5 and z3.
+
+
+[1m[33mWarning:[39m[22m CHC analysis was not possible since no Horn solver was found and enabled. The accepted solvers for CHC are Eldarica and z3.
+
+
+[1m[33mWarning:[39m[22m BMC analysis was not possible since no SMT solver was found and enabled. The accepted solvers for BMC are cvc5 and z3.
+
+
+[1m[33mWarning:[39m[22m CHC analysis was not possible since no Horn solver was found and enabled. The accepted solvers for CHC are Eldarica and z3.
+
+
+[1m[33mWarning:[39m[22m BMC analysis was not possible since no SMT solver was found and enabled. The accepted solvers for BMC are cvc5 and z3.
+
+
+[1m[33mWarning:[39m[22m CHC analysis was not possible since no Horn solver was found and enabled. The accepted solvers for CHC are Eldarica and z3.
+
+
+[1m[33mWarning:[39m[22m BMC analysis was not possible since no SMT solver was found and enabled. The accepted solvers for BMC are cvc5 and z3.
+
+
+[1m[33mWarning:[39m[22m CHC analysis was not possible since no Horn solver was found and enabled. The accepted solvers for CHC are Eldarica and z3.
+
+
+[1m[33mWarning:[39m[22m BMC analysis was not possible since no SMT solver was found and enabled. The accepted solvers for BMC are cvc5 and z3.
+
+
+[1m[33mWarning:[39m[22m CHC analysis was not possible since no Horn solver was found and enabled. The accepted solvers for CHC are Eldarica and z3.
+
+
+[1m[33mWarning:[39m[22m BMC analysis was not possible since no SMT solver was found and enabled. The accepted solvers for BMC are cvc5 and z3.
+
+
+[1m[33mWarning:[39m[22m The SMTChecker pragma has been deprecated and will be removed in the future. Please use the "model checker engine" compiler setting to activate the SMTChecker instead. If the pragma is enabled, all engines will be used.
+ --> contracts/seg_contract.sol:1:1:
+  |
+1 | pragma experimental SMTChecker;
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+[1m[33mWarning:[39m[22m CHC analysis was not possible since no Horn solver was found and enabled. The accepted solvers for CHC are Eldarica and z3.
+
+
+[1m[33mWarning:[39m[22m BMC analysis was not possible since no SMT solver was found and enabled. The accepted solvers for BMC are cvc5 and z3.
+
+
+Compiled 7 Solidity files successfully (evm target: paris).
+ChipToken deployed to: 0xC2d8B5248F7A6439E667eAAB6148eC68abCC516B
+]0;narwhal@santosh:~/attack_testbed[?2004h[narwhal@santosh attack_testbed]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed[?2004h[narwhal@santosh attack_testbed]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed[?2004h[narwhal@santosh attack_testbed]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed[?2004h[narwhal@santosh attack_testbed]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed[?2004h[narwhal@santosh attack_testbed]$ cd scripts/
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ node intract_with\ _sm_contract.js [1P[17@\ _sm_contract.js[1P[1P[1P[1P[1P[1P[1P[1P[1P[1P[1P[1P[1P[1P[1P[1P[1P[C[C[1P[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C
+[?2004lnode:internal/modules/cjs/loader:1210
+  throw err;
+  ^
+
+Error: Cannot find module '/home/narwhal/attack_testbed/scripts/intract_with_sm_contract.js'
+[90m    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)[39m
+[90m    at Module._load (node:internal/modules/cjs/loader:1038:27)[39m
+[90m    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)[39m
+[90m    at node:internal/main/run_main_module:28:49[39m {
+  code: [32m'MODULE_NOT_FOUND'[39m,
+  requireStack: []
+}
+
+Node.js v20.19.5
+]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ node intract_with_sm_contract.js 
+[?2004lnode:internal/modules/cjs/loader:1210
+  throw err;
+  ^
+
+Error: Cannot find module '/home/narwhal/attack_testbed/scripts/intract_with_sm_contract.js'
+[90m    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)[39m
+[90m    at Module._load (node:internal/modules/cjs/loader:1038:27)[39m
+[90m    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)[39m
+[90m    at node:internal/main/run_main_module:28:49[39m {
+  code: [32m'MODULE_NOT_FOUND'[39m,
+  requireStack: []
+}
+
+Node.js v20.19.5
+]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ pw
+[?2004lbash: pw: command not found...
+^Z
+[1]+  Stopped                 pw
+]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ pwd
+[?2004l/home/narwhal/attack_testbed/scripts
+]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ ls
+[?2004l block_tx_list.js       deploy_attack.ts   intract_sm_contract_fun.js      Resource_att_2.js            [0m[01;32mrun.sh[0m
+ block_with_status.js   deploy_seg.ts     'intract_with _sm_contract.js'   Resource_att.js              test.js
+ deploy_att_2.ts        deploy.ts          pending_tx_list.js              Resource_exhaust_Attack.js
+]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ lspwd[Knode intract_with_sm_contract.js 
+[?2004lnode:internal/modules/cjs/loader:1210
+  throw err;
+  ^
+
+Error: Cannot find module '/home/narwhal/attack_testbed/scripts/intract_with_sm_contract.js'
+[90m    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)[39m
+[90m    at Module._load (node:internal/modules/cjs/loader:1038:27)[39m
+[90m    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)[39m
+[90m    at node:internal/main/run_main_module:28:49[39m {
+  code: [32m'MODULE_NOT_FOUND'[39m,
+  requireStack: []
+}
+
+Node.js v20.19.5
+]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ node intract_with_sm_contract.js 
+[?2004lnode:internal/modules/cjs/loader:1210
+  throw err;
+  ^
+
+Error: Cannot find module '/home/narwhal/attack_testbed/scripts/intract_with_sm_contract.js'
+[90m    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)[39m
+[90m    at Module._load (node:internal/modules/cjs/loader:1038:27)[39m
+[90m    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)[39m
+[90m    at node:internal/main/run_main_module:28:49[39m {
+  code: [32m'MODULE_NOT_FOUND'[39m,
+  requireStack: []
+}
+
+Node.js v20.19.5
+]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ ls
+[?2004l block_tx_list.js       deploy_attack.ts   intract_sm_contract_fun.js      Resource_att_2.js            [0m[01;32mrun.sh[0m
+ block_with_status.js   deploy_seg.ts     'intract_with _sm_contract.js'   Resource_att.js              test.js
+ deploy_att_2.ts        deploy.ts          pending_tx_list.js              Resource_exhaust_Attack.js
+]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ cp [7m'intract_with _sm_contract.js'[27m'intract_with _sm_contract.js' [7m'intract_with _sm_contract.js'[27m[1P'intract_with _sm_contract.js[1P_sm_contract.js[1Pintract_with_sm_contract.js
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ ls
+[?2004l block_tx_list.js       deploy_attack.ts   intract_sm_contract_fun.js      pending_tx_list.js   Resource_exhaust_Attack.js
+ block_with_status.js   deploy_seg.ts     'intract_with _sm_contract.js'   Resource_att_2.js    [0m[01;32mrun.sh[0m
+ deploy_att_2.ts        deploy.ts          intract_with_sm_contract.js     Resource_att.js      test.js
+]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ rm [7m'intract_with _sm_contract.js'[27m'intract_with _sm_contract.js'
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ ls
+[?2004lblock_tx_list.js      deploy_attack.ts  intract_sm_contract_fun.js   Resource_att_2.js           [0m[01;32mrun.sh[0m
+block_with_status.js  deploy_seg.ts     intract_with_sm_contract.js  Resource_att.js             test.js
+deploy_att_2.ts       deploy.ts         pending_tx_list.js           Resource_exhaust_Attack.js
+]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ lsrm 'intract_with _sm_contract.js'[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cls[Kcp 'intract_with _sm_contract.js' intract_with_sm_contract.js[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cls[Knode intract_with_sm_contract.js 
+[?2004lError calling DoS: InvalidResponseError: Returned error: unknown account
+    at Web3RequestManager._processJsonRpcResponse (/home/narwhal/attack_testbed/node_modules/[4mweb3-core[24m/lib/commonjs/web3_request_manager.js:281:23)
+    at Web3RequestManager.<anonymous> (/home/narwhal/attack_testbed/node_modules/[4mweb3-core[24m/lib/commonjs/web3_request_manager.js:167:29)
+    at Generator.next (<anonymous>)
+    at fulfilled (/home/narwhal/attack_testbed/node_modules/[4mweb3-core[24m/lib/commonjs/web3_request_manager.js:21:58)
+[90m    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m {
+  cause: { code: [33m-32000[39m, message: [32m'unknown account'[39m },
+  code: [33m101[39m,
+  data: [90mundefined[39m,
+  statusCode: [90mundefined[39m,
+  request: {
+    jsonrpc: [32m'2.0'[39m,
+    id: [32m'2dc03feb-3595-40a8-aba9-08d022985a58'[39m,
+    method: [32m'eth_sendTransaction'[39m,
+    params: [ [36m[Object][39m ]
+  }
+}
+]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ node intract_with_sm_contract.js 
+[?2004lError calling DoS: InvalidResponseError: Returned error: unknown account
+    at Web3RequestManager._processJsonRpcResponse (/home/narwhal/attack_testbed/node_modules/[4mweb3-core[24m/lib/commonjs/web3_request_manager.js:281:23)
+    at Web3RequestManager.<anonymous> (/home/narwhal/attack_testbed/node_modules/[4mweb3-core[24m/lib/commonjs/web3_request_manager.js:167:29)
+    at Generator.next (<anonymous>)
+    at fulfilled (/home/narwhal/attack_testbed/node_modules/[4mweb3-core[24m/lib/commonjs/web3_request_manager.js:21:58)
+[90m    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m {
+  cause: { code: [33m-32000[39m, message: [32m'unknown account'[39m },
+  code: [33m101[39m,
+  data: [90mundefined[39m,
+  statusCode: [90mundefined[39m,
+  request: {
+    jsonrpc: [32m'2.0'[39m,
+    id: [32m'd78b135d-6219-466d-bb87-a6ee2a16520c'[39m,
+    method: [32m'eth_sendTransaction'[39m,
+    params: [ [36m[Object][39m ]
+  }
+}
+]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ ls
+[?2004lblock_tx_list.js      deploy_attack.ts  intract_sm_contract_fun.js   Resource_att_2.js           [0m[01;32mrun.sh[0m
+block_with_status.js  deploy_seg.ts     intract_with_sm_contract.js  Resource_att.js             test.js
+deploy_att_2.ts       deploy.ts         pending_tx_list.js           Resource_exhaust_Attack.js
+]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ node [7mintract_sm_contract_fun.js[27mintract_sm_contract_fun.js
+[?2004l[33m36n[39m
+Error calling DoS: InvalidResponseError: Returned error: replacement transaction underpriced
+    at Web3RequestManager._processJsonRpcResponse (/home/narwhal/attack_testbed/node_modules/[4mweb3-core[24m/lib/commonjs/web3_request_manager.js:281:23)
+    at Web3RequestManager.<anonymous> (/home/narwhal/attack_testbed/node_modules/[4mweb3-core[24m/lib/commonjs/web3_request_manager.js:167:29)
+    at Generator.next (<anonymous>)
+    at fulfilled (/home/narwhal/attack_testbed/node_modules/[4mweb3-core[24m/lib/commonjs/web3_request_manager.js:21:58)
+[90m    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m {
+  cause: { code: [33m-32000[39m, message: [32m'replacement transaction underpriced'[39m },
+  code: [33m101[39m,
+  data: [90mundefined[39m,
+  statusCode: [90mundefined[39m,
+  request: {
+    jsonrpc: [32m'2.0'[39m,
+    id: [32m'cb2f23f7-43c0-43c5-b071-1be0a3445f93'[39m,
+    method: [32m'eth_sendRawTransaction'[39m,
+    params: [
+      [32m'0xf88c24850ba43b74008307a12094c2d8b5248f7a6439e667eaab6148ec68abcc516b80a4a6faff51000000000000000000000000000000000000000000000000000000000000000a8360306ba08d5aa681fa18a4c2529e098ff7a6aa16f3a8b9b279d91e29a2979b773efe8e8ca07c461ba0563be4b7e68ee7ebca2c1882a640527325c72e89f6fef7ce3174f175'[39m
+    ]
+  }
+}
+]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ node intract_sm_contract_fun.js[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cls[Knode intract_with_sm_contract.js [C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cls[Krm 'intract_with _sm_contract.js'[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cls[Kcp 'intract_with _sm_contract.js' intract_with_sm_contract.js[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cls[Knode intract_with_sm_contract.js [C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cls[Kpwd[Knode intract_with_sm_contract.js [C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[22Pcd scripts/npx hardhat run scripts/deploy_attack.ts --network localnet[1P[1P[1P[1P[1P[1P[1P[1@_[1@A[1P[1@a[1@t[1P[1P[1P[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Ccd scripts/[Knode intract_with_sm_contract.js [C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cpw[Kd[1Plsnode intract_with_sm_contract.js [C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cls[Kcp 'intract_with _sm_contract.js' intract_with_sm_contract.js[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cls[Krm 'intract_with _sm_contract.js'[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cls[Knode intract_with_sm_contract.js [C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cls[Knode intract_sm_contract_fun.js[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Kcd ..
+[?2004l]0;narwhal@santosh:~/attack_testbed[?2004h[narwhal@santosh attack_testbed]$ cd ..node intract_sm_contract_fun.jsls[Knode intract_with_sm_contract.js ls[Krm 'intract_with _sm_contract.js'ls[Kcp 'intract_with _sm_contract.js' intract_with_sm_contract.js[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cls[Knode intract_with_sm_contract.js ls[Kpwd[Knode intract_with_sm_contract.js [22Pcd scripts/npx hardhat run scripts/deploy.ts --network localnet_attack.ts --network local-eth-testnet[C[C[C[C[C[C[C[1P[1P[1P[1@_[4@2.ts[1P[1P[1P[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[K[K[K[K[K[K[K[K[K[K[K[Knet
+[?2004lChipToken deployed to: 0xBf549F50fdbbD7Eb73ce88985AA107eEC0955f4c
+]0;narwhal@santosh:~/attack_testbed[?2004h[narwhal@santosh attack_testbed]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed[?2004h[narwhal@santosh attack_testbed]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed[?2004h[narwhal@santosh attack_testbed]$ cd scripts/
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ ls
+[?2004lblock_tx_list.js      deploy_attack.ts  intract_sm_contract_fun.js   Resource_att_2.js           [0m[01;32mrun.sh[0m
+block_with_status.js  deploy_seg.ts     intract_with_sm_contract.js  Resource_att.js             test.js
+deploy_att_2.ts       deploy.ts         pending_tx_list.js           Resource_exhaust_Attack.js
+]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ node [7mResource_att_2.js[27mResource_att_2.js
+[?2004lError executing DoS transactions: FetchError: request to http://127.0.0.1:32770/ failed, reason: connect ECONNREFUSED 127.0.0.1:32770
+    at ClientRequest.<anonymous> (/home/narwhal/attack_testbed/node_modules/[4mnode-fetch[24m/lib/index.js:1501:11)
+[90m    at ClientRequest.emit (node:events:524:28)[39m
+[90m    at emitErrorEvent (node:_http_client:101:11)[39m
+[90m    at Socket.socketErrorListener (node:_http_client:504:5)[39m
+[90m    at Socket.emit (node:events:524:28)[39m
+[90m    at emitErrorNT (node:internal/streams/destroy:169:8)[39m
+[90m    at emitErrorCloseNT (node:internal/streams/destroy:128:3)[39m
+[90m    at process.processTicksAndRejections (node:internal/process/task_queues:82:21)[39m {
+  type: [32m'system'[39m,
+  errno: [32m'ECONNREFUSED'[39m,
+  code: [32m'ECONNREFUSED'[39m
+}
+]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ node Resource_att_2.js
+[?2004lSending transaction 1/10...
+Sending transaction 2/10...
+Tx Hash: 0x86997bef135fe82de72139ce6a2dfabe1cb1f5b7c05af6210d077031572ac373
+Sending transaction 3/10...
+Tx Hash: 0xcd1e88d196eb1ff1bca1742608cfa404d7aea7812c2c1234f042c7bc02d2c759
+Sending transaction 4/10...
+Tx Hash: 0x3fe99e4748b5dce78d9e3ff094521923de00d893c535d67d6fefa3b2fab69f82
+Sending transaction 5/10...
+Tx Hash: 0x95176e52e83c2aa78a22ab304d9ab71cddbbf114681413870b4137e1671c635a
+Sending transaction 6/10...
+Tx Hash: 0xd17402ab77cfd76566096105d99ae2a354963e91d5010518e99cd46ec07499a3
+Sending transaction 7/10...
+Tx Hash: 0x6a97d98102b57446f560de8821bbcff14cb589089aed4f1e04b0fe6b68c17b54
+Sending transaction 8/10...
+Tx Hash: 0x09a3e14ddc3f920a3f98208d07167f85747c5a251814ef2dcbd62a9aea9567a7
+Sending transaction 9/10...
+Tx Hash: 0xfbc6067657eaa60c5af3a94ad5bfa689fc7e1d7d38e3f53e9e5ba1ba791638c8
+Sending transaction 10/10...
+Tx Hash: 0x720c4be3dde4c9e8bfb4dc6571f08575877852639f436f731634a1d6c4635388
+Tx Hash: 0xfdcfb7a2a82e68aeb3b1bd3591ef3520f533cac4412de448f65035cfa8304455
+^Z
+[2]+  Stopped                 node Resource_att_2.js
+]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ node Resource_att_2.js
+[?2004lSending transaction 1/10...
+Sending transaction 2/10...
+Tx Hash: 0xb9854dcf46948d347e3c9b3f51dac4f6f0aef6cbd3893db4c4c706e66cdc9cae
+Sending transaction 3/10...
+Tx Hash: 0xe59bfdae4ec80ea1b643a591bbd0305c2bd1ea99c8dff926ea9612d5204b67d4
+Sending transaction 4/10...
+Tx Hash: 0x5bec8931bf4b6c0b1dc8b5cc9c31acd4172e96092f480613e508c8c5b4b4ca10
+Sending transaction 5/10...
+Tx Hash: 0x301937f4b28867c0b673e1e98e86f9ba0c79c5496deade622008230a219f4262
+Sending transaction 6/10...
+Tx Hash: 0xc90277602f19db88793749cc8dfd980dab108e9b95c01dd4267a59e40052d670
+Sending transaction 7/10...
+Tx Hash: 0xc3c03e0915ecd2a9b99567d06bc97eb7200172ec71cf12162cd2157fd3df47b1
+Sending transaction 8/10...
+Tx Hash: 0x83d778ce87fbf7f85a3aa3e37967b5df3e57ac862239e2b2666e4e0f51f84b7c
+Sending transaction 9/10...
+Tx Hash: 0x4711981383e4fb6a31f4a1154050ef8ad0127337c48071fa6d30100e7bcae27c
+Sending transaction 10/10...
+Tx Hash: 0x682acea7af088c29ee0b536bdf3410fc508b71587951d627dca3204e53f3d71a
+Tx Hash: 0x38b5ff949cbe30c777f208a07dbb498e901ecb3fe00546ef77133e347db5f69c
+^Z
+[3]+  Stopped                 node Resource_att_2.js
+]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ node Resource_att_2.js
+[?2004lSending transaction 1/10...
+Sending transaction 2/10...
+Tx Hash: 0x093ba6fd6fa8b9d19d42fd09a54e9fe2c7f2cfc50a971a37bb4edd90225cbded
+Sending transaction 3/10...
+Tx Hash: 0xb28bcf741fa71110e0297a46a2a08b9e69f8988471420dc7dbc159c3b8577ec5
+Sending transaction 4/10...
+Tx Hash: 0xd2669076bc40bae7d68770b4d08ce1c6c468db075d8dfbe316d6c534a1ace98c
+Sending transaction 5/10...
+Tx Hash: 0xbabefc87d1ed0ff8e36f67263c551cf6275218173963568c14adeaabc2bf8f54
+Sending transaction 6/10...
+Tx Hash: 0x8174095cda6f96414d0195398c76df3757ea4406b6c938de012a1ccadbd4cc08
+Sending transaction 7/10...
+Tx Hash: 0x9e92ae14707c14e4fcd714d03d8079751934299e8a950da97544369c6e2f91ea
+Sending transaction 8/10...
+Tx Hash: 0xe7b560c94e4a13b70914af6a89da453c8f6c543879b2ab22484636ea7d5967ce
+Sending transaction 9/10...
+Tx Hash: 0xc48a4bc2c301685d541e80ce5b53d7369bcc9898c44302cb011cad49d97c89d5
+Sending transaction 10/10...
+Tx Hash: 0x6bfd991e61756c5dc1f5ebd5bd9e2fd498f476710198534f6d2b6d19659bfec4
+Tx Hash: 0x18c4bb2bd67e07df3c401420ad82bc9ee41bfbd148006518bf4f89715563c34a
+^Z
+[4]+  Stopped                 node Resource_att_2.js
+]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ node Resource_att_2.js
+[?2004lSending transaction 1/1...
+Tx Hash: 0xa2f64edcd9159a673904ce308df574295d032be36188d9ddc5924c8d7ed4cc69
+
+/home/narwhal/attack_testbed/node_modules/node-fetch/lib/index.js:1501
+			reject(new FetchError(`request to ${request.url} failed, reason: ${err.message}`, 'system', err));
+			       ^
+FetchError: request to http://127.0.0.1:32841/ failed, reason: socket hang up
+    at ClientRequest.<anonymous> (/home/narwhal/attack_testbed/node_modules/[4mnode-fetch[24m/lib/index.js:1501:11)
+[90m    at ClientRequest.emit (node:events:524:28)[39m
+[90m    at emitErrorEvent (node:_http_client:101:11)[39m
+[90m    at Socket.socketOnEnd (node:_http_client:528:5)[39m
+[90m    at Socket.emit (node:events:536:35)[39m
+[90m    at endReadableNT (node:internal/streams/readable:1698:12)[39m
+[90m    at process.processTicksAndRejections (node:internal/process/task_queues:82:21)[39m {
+  type: [32m'system'[39m,
+  errno: [32m'ECONNRESET'[39m,
+  code: [32m'ECONNRESET'[39m
+}
+
+Node.js v20.19.5
+]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ node Resource_att_2.js
+[?2004lSending transaction 1/1...
+Tx Hash: 0xa9b9e5576cce131d9bba681f3b6d6c4a3f414b4a4ca2b54584f3911deff59bd7
+Tx 1 confirmed: 0xa9b9e5576cce131d9bba681f3b6d6c4a3f414b4a4ca2b54584f3911deff59bd7
+]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed/scripts[?2004h[narwhal@santosh scripts]$ cd ..
+[?2004l]0;narwhal@santosh:~/attack_testbed[?2004h[narwhal@santosh attack_testbed]$ ls
+[?2004l Accept:                     create_account.mjs        mul_tx.mjs           process_transactions.py           [0m[01;32mtsconfig.json[0m
+ account_private_keys.json   fund.mjs                  [01;34mnode_modules[0m         [01;32mREADME.md[0m                         [01;34mtypechain-types[0m
+ account_setup.py           'hardhat.config copy.ts'   normal_mult_tx.mjs   replay_simulated_mempool_bak.py   typescript
+ [01;34martifacts[0m                   hardhat.config.ts         over_draft_tx.mjs    replay_simulated_mempool.py       User-Agent:
+ [01;34matttack_env[0m                 Host:                     [01;32mpackage.json[0m         [01;34mscripts[0m                           wallet_private_keys.json
+ [01;34mcache[0m                       [01;34mignition[0m                  [01;32mpackage-lock.json[0m    [01;34mtest[0m
+ Content-Length:             key.py                    parallel_ex2.mjs     tet_tx.mjs
+ Content-Type:               memory_purge_tx.mjs       parallel_ex.mjs      transaction.bin
+ [01;34mcontracts[0m                   mempool.csv               POST                 transaction.txt
+]0;narwhal@santosh:~/attack_testbed[?2004h[narwhal@santosh attack_testbed]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed[?2004h[narwhal@santosh attack_testbed]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed[?2004h[narwhal@santosh attack_testbed]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed[?2004h[narwhal@santosh attack_testbed]$ node normal_mult_tx.mjs 
+[?2004l
+/home/narwhal/attack_testbed/node_modules/node-fetch/lib/index.js:1501
+			reject(new FetchError(`request to ${request.url} failed, reason: ${err.message}`, 'system', err));
+			       ^
+FetchError: request to http://127.0.0.1:32841/ failed, reason: connect ECONNREFUSED 127.0.0.1:32841
+    at ClientRequest.<anonymous> [90m(/home/narwhal/attack_testbed/[39mnode_modules/[4mnode-fetch[24m/lib/index.js:1501:11[90m)[39m
+[90m    at ClientRequest.emit (node:events:524:28)[39m
+[90m    at emitErrorEvent (node:_http_client:101:11)[39m
+[90m    at Socket.socketErrorListener (node:_http_client:504:5)[39m
+[90m    at Socket.emit (node:events:524:28)[39m
+[90m    at emitErrorNT (node:internal/streams/destroy:169:8)[39m
+[90m    at emitErrorCloseNT (node:internal/streams/destroy:128:3)[39m
+[90m    at process.processTicksAndRejections (node:internal/process/task_queues:82:21)[39m {
+  type: [32m'system'[39m,
+  errno: [32m'ECONNREFUSED'[39m,
+  code: [32m'ECONNREFUSED'[39m
+}
+
+Node.js v20.19.5
+]0;narwhal@santosh:~/attack_testbed[?2004h[narwhal@santosh attack_testbed]$ node normal_mult_tx.mjs 
+[?2004lAvailable accounts:  []
+Converted valueInWei:  100000000000000000
+Converted gasPrice:  20000000000
+Nonce (BigInt):  [33m1n[39m
+Nonce as string:  1
+Transaction object:  {
+  from: [32m'0x8943545177806ED17B9F23F0a21ee5948eCaa776'[39m,
+  to: [32m'0x614561D2d143621E126e87831AEF287678B442b8'[39m,
+  value: [32m'100000000000000000'[39m,
+  gas: [32m'21000'[39m,
+  gasPrice: [32m'20000000000'[39m,
+  nonce: [32m'1'[39m
+}
+[33m1771617499.167[39m
+{
+  messageHash: [32m'0xb541fc7ebec2f1a62046ac4c7b80d88c5a57c26f2243165c00c1b2c1ffa0cbb0'[39m,
+  v: [32m'0x60306c'[39m,
+  r: [32m'0xe005d804e67c12acec4c9a490d5825f1b041b6178ae735256c231e7e64645acd'[39m,
+  s: [32m'0x77c4aabdaa0b5892f4d26de8ac3a81bb35df885be71d22551dd35c54ee134c98'[39m,
+  rawTransaction: [32m'0xf86f018504a817c80082520894614561d2d143621e126e87831aef287678b442b888016345785d8a0000808360306ca0e005d804e67c12acec4c9a490d5825f1b041b6178ae735256c231e7e64645acda077c4aabdaa0b5892f4d26de8ac3a81bb35df885be71d22551dd35c54ee134c98'[39m,
+  transactionHash: [32m'0x7131be90b086c5e4c269d41ddee7aaf9aec5ae400dac5ab791a183047849ca2e'[39m
+}
+Transaction 1 successful with hash: 0x7131be90b086c5e4c269d41ddee7aaf9aec5ae400dac5ab791a183047849ca2e
+[33m1771617599[39m
+Transaction mined in 99.83299994468689 seconds
+Transaction Receipt: {
+  blockHash: [32m'0x465638e114779b9f136dbf4a97d3d00233aae48b02768660048e053f19a9aa70'[39m,
+  blockNumber: [33m373n[39m,
+  cumulativeGasUsed: [33m21000n[39m,
+  effectiveGasPrice: [33m20000000000n[39m,
+  from: [32m'0x8943545177806ed17b9f23f0a21ee5948ecaa776'[39m,
+  gasUsed: [33m21000n[39m,
+  logs: [],
+  logsBloom: [32m'0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'[39m,
+  status: [33m1n[39m,
+  to: [32m'0x614561d2d143621e126e87831aef287678b442b8'[39m,
+  transactionHash: [32m'0x7131be90b086c5e4c269d41ddee7aaf9aec5ae400dac5ab791a183047849ca2e'[39m,
+  transactionIndex: [33m0n[39m,
+  type: [33m0n[39m
+}
+Transaction object:  {
+  from: [32m'0x8943545177806ED17B9F23F0a21ee5948eCaa776'[39m,
+  to: [32m'0x614561D2d143621E126e87831AEF287678B442b8'[39m,
+  value: [32m'100000000000000000'[39m,
+  gas: [32m'21000'[39m,
+  gasPrice: [32m'20000000000'[39m,
+  nonce: [32m'2'[39m
+}
+[33m1771617599.415[39m
+{
+  messageHash: [32m'0x6c3b4a05fe78301ae2c58bd3a10c4e112cd80ffdee789605352721b717fb3220'[39m,
+  v: [32m'0x60306c'[39m,
+  r: [32m'0x3d359ddbec9754babad2acc7f975a07db6b62a5cadfd238b8052d24f485a8526'[39m,
+  s: [32m'0x0f3aa7fd21a6a743f79799a3bdcf7c6cba5abf7b87abdb5d9f94109922ae7504'[39m,
+  rawTransaction: [32m'0xf86f028504a817c80082520894614561d2d143621e126e87831aef287678b442b888016345785d8a0000808360306ca03d359ddbec9754babad2acc7f975a07db6b62a5cadfd238b8052d24f485a8526a00f3aa7fd21a6a743f79799a3bdcf7c6cba5abf7b87abdb5d9f94109922ae7504'[39m,
+  transactionHash: [32m'0x7a128922f04705219598b47dbd8fb5884daa18ba3aff1adcbf14414edd92b4fe'[39m
+}
+^Z
+[5]+  Stopped                 node normal_mult_tx.mjs
+]0;narwhal@santosh:~/attack_testbed[?2004h[narwhal@santosh attack_testbed]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed[?2004h[narwhal@santosh attack_testbed]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed[?2004h[narwhal@santosh attack_testbed]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed[?2004h[narwhal@santosh attack_testbed]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed[?2004h[narwhal@santosh attack_testbed]$ 
+[?2004l]0;narwhal@santosh:~/attack_testbed[?2004h[narwhal@santosh attack_testbed]$ node normal_mult_tx.mjs [Knode normal_mult_tx.mjs [Knode normal_mult_tx.mjs 
+[?2004lAvailable accounts:  []
+Converted valueInWei:  100000000000000000
+Converted gasPrice:  20000000000
+Nonce (BigInt):  [33m3n[39m
+Nonce as string:  3
+Transaction object:  {
+  from: [32m'0x8943545177806ED17B9F23F0a21ee5948eCaa776'[39m,
+  to: [32m'0x614561D2d143621E126e87831AEF287678B442b8'[39m,
+  value: [32m'100000000000000000'[39m,
+  gas: [32m'21000'[39m,
+  gasPrice: [32m'20000000000'[39m,
+  nonce: [32m'3'[39m
+}
+[33m1771619019.709[39m
+{
+  messageHash: [32m'0x22b09367597988f7a764e184a2c4e432e866b62100b7a0bf393566de310b223e'[39m,
+  v: [32m'0x60306c'[39m,
+  r: [32m'0xf287ec5b02ec219c89e82f8c239442f45ffcd00df1666df91a72d4467676916b'[39m,
+  s: [32m'0x032c6a0371707870308168357b921852690c5f0b004579bb23e252bca3961898'[39m,
+  rawTransaction: [32m'0xf86f038504a817c80082520894614561d2d143621e126e87831aef287678b442b888016345785d8a0000808360306ca0f287ec5b02ec219c89e82f8c239442f45ffcd00df1666df91a72d4467676916ba0032c6a0371707870308168357b921852690c5f0b004579bb23e252bca3961898'[39m,
+  transactionHash: [32m'0x6d7ad4d103eebc780aa387507b80e2fc4a2c8a9ca51c6e4b92f103bbb8d1ca73'[39m
+}
+Transaction 1 successful with hash: 0x6d7ad4d103eebc780aa387507b80e2fc4a2c8a9ca51c6e4b92f103bbb8d1ca73
+[33m1771619099[39m
+Transaction mined in 79.29099988937378 seconds
+Transaction Receipt: {
+  blockHash: [32m'0x83ddf19b74778837a8bd75c2494cb62c41a544213554397a4214d4389632bfa8'[39m,
+  blockNumber: [33m498n[39m,
+  cumulativeGasUsed: [33m21000n[39m,
+  effectiveGasPrice: [33m20000000000n[39m,
+  from: [32m'0x8943545177806ed17b9f23f0a21ee5948ecaa776'[39m,
+  gasUsed: [33m21000n[39m,
+  logs: [],
+  logsBloom: [32m'0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'[39m,
+  status: [33m1n[39m,
+  to: [32m'0x614561d2d143621e126e87831aef287678b442b8'[39m,
+  transactionHash: [32m'0x6d7ad4d103eebc780aa387507b80e2fc4a2c8a9ca51c6e4b92f103bbb8d1ca73'[39m,
+  transactionIndex: [33m0n[39m,
+  type: [33m0n[39m
+}
+Transaction object:  {
+  from: [32m'0x8943545177806ED17B9F23F0a21ee5948eCaa776'[39m,
+  to: [32m'0x614561D2d143621E126e87831AEF287678B442b8'[39m,
+  value: [32m'100000000000000000'[39m,
+  gas: [32m'21000'[39m,
+  gasPrice: [32m'20000000000'[39m,
+  nonce: [32m'4'[39m
+}
+[33m1771619099.936[39m
+{
+  messageHash: [32m'0x86812ced831bf894701df189fe73d738560ff3d520a13f5c42fed97878f31dc2'[39m,
+  v: [32m'0x60306b'[39m,
+  r: [32m'0xc42ce59887ad145756ef79903fd18c25b5064a65302525e11ceefff29229eb81'[39m,
+  s: [32m'0x7156ac1cef4ab7ed17c03ce3c7ea18e391021f7b52556c0b9f111ac92e44fd3f'[39m,
+  rawTransaction: [32m'0xf86f048504a817c80082520894614561d2d143621e126e87831aef287678b442b888016345785d8a0000808360306ba0c42ce59887ad145756ef79903fd18c25b5064a65302525e11ceefff29229eb81a07156ac1cef4ab7ed17c03ce3c7ea18e391021f7b52556c0b9f111ac92e44fd3f'[39m,
+  transactionHash: [32m'0xb0e588ec75d5f8c5bb2f2f269570203610ea051abb0fa95cc32239b11f760bb4'[39m
+}
+Transaction 2 successful with hash: 0xb0e588ec75d5f8c5bb2f2f269570203610ea051abb0fa95cc32239b11f760bb4
+[33m1771619111[39m
+Transaction mined in 11.063999891281128 seconds
+Transaction Receipt: {
+  blockHash: [32m'0x81523e761d36884aa0b0440cf610b6c8605770d827d6b75f18388f62b1a0dcf5'[39m,
+  blockNumber: [33m499n[39m,
+  cumulativeGasUsed: [33m21000n[39m,
+  effectiveGasPrice: [33m20000000000n[39m,
+  from: [32m'0x8943545177806ed17b9f23f0a21ee5948ecaa776'[39m,
+  gasUsed: [33m21000n[39m,
+  logs: [],
+  logsBloom: [32m'0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'[39m,
+  status: [33m1n[39m,
+  to: [32m'0x614561d2d143621e126e87831aef287678b442b8'[39m,
+  transactionHash: [32m'0xb0e588ec75d5f8c5bb2f2f269570203610ea051abb0fa95cc32239b11f760bb4'[39m,
+  transactionIndex: [33m0n[39m,
+  type: [33m0n[39m
+}
+Transaction object:  {
+  from: [32m'0x8943545177806ED17B9F23F0a21ee5948eCaa776'[39m,
+  to: [32m'0x614561D2d143621E126e87831AEF287678B442b8'[39m,
+  value: [32m'100000000000000000'[39m,
+  gas: [32m'21000'[39m,
+  gasPrice: [32m'20000000000'[39m,
+  nonce: [32m'5'[39m
+}
+[33m1771619111.995[39m
+{
+  messageHash: [32m'0x2f9d50a054367773ce814dbb525ca7d4f90ef10ee4ebbe6375ef930b5524dc9f'[39m,
+  v: [32m'0x60306b'[39m,
+  r: [32m'0x6cdebabf21d90f41ec9d50a7313d1a3f9f726eceb49e74f87b63bd6b4d19051d'[39m,
+  s: [32m'0x76884c7b46bff574d237c269a427877301a986eb38dbe810b4872e8ea61a2fe9'[39m,
+  rawTransaction: [32m'0xf86f058504a817c80082520894614561d2d143621e126e87831aef287678b442b888016345785d8a0000808360306ba06cdebabf21d90f41ec9d50a7313d1a3f9f726eceb49e74f87b63bd6b4d19051da076884c7b46bff574d237c269a427877301a986eb38dbe810b4872e8ea61a2fe9'[39m,
+  transactionHash: [32m'0xd2402cec9dc2624f983ffa5590e74aab824983818cb09995e622e2bdbd873ccf'[39m
+}
+Transaction 3 successful with hash: 0xd2402cec9dc2624f983ffa5590e74aab824983818cb09995e622e2bdbd873ccf
+[33m1771619195[39m
+Transaction mined in 83.00500011444092 seconds
+Transaction Receipt: {
+  blockHash: [32m'0x3e80ccdce06f5f8f84d310886728e6606ddd3bf24a7bac26edc01c2b5ea47bc3'[39m,
+  blockNumber: [33m506n[39m,
+  cumulativeGasUsed: [33m21000n[39m,
+  effectiveGasPrice: [33m20000000000n[39m,
+  from: [32m'0x8943545177806ed17b9f23f0a21ee5948ecaa776'[39m,
+  gasUsed: [33m21000n[39m,
+  logs: [],
+  logsBloom: [32m'0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'[39m,
+  status: [33m1n[39m,
+  to: [32m'0x614561d2d143621e126e87831aef287678b442b8'[39m,
+  transactionHash: [32m'0xd2402cec9dc2624f983ffa5590e74aab824983818cb09995e622e2bdbd873ccf'[39m,
+  transactionIndex: [33m0n[39m,
+  type: [33m0n[39m
+}
+Transaction object:  {
+  from: [32m'0x8943545177806ED17B9F23F0a21ee5948eCaa776'[39m,
+  to: [32m'0x614561D2d143621E126e87831AEF287678B442b8'[39m,
+  value: [32m'100000000000000000'[39m,
+  gas: [32m'21000'[39m,
+  gasPrice: [32m'20000000000'[39m,
+  nonce: [32m'6'[39m
+}
+[33m1771619195.15[39m
+{
+  messageHash: [32m'0xba49dca0272eebc3cb7c8509221c3fb8dc0fe55a7340661f015ea9e04cf1ba48'[39m,
+  v: [32m'0x60306b'[39m,
+  r: [32m'0x17301945ead87bc4a1846d5377687f567b56a5a87106c377b0c65e2d47577ab5'[39m,
+  s: [32m'0x7c5719fa5ddd9285359ddc13e796118c550dce56a25929d2e7cb2f950675c127'[39m,
+  rawTransaction: [32m'0xf86f068504a817c80082520894614561d2d143621e126e87831aef287678b442b888016345785d8a0000808360306ba017301945ead87bc4a1846d5377687f567b56a5a87106c377b0c65e2d47577ab5a07c5719fa5ddd9285359ddc13e796118c550dce56a25929d2e7cb2f950675c127'[39m,
+  transactionHash: [32m'0x28bff5e41b995a9f977c686b9a5340cde5c5821eac41b48b256475a174c87701'[39m
+}
+Transaction 4 successful with hash: 0x28bff5e41b995a9f977c686b9a5340cde5c5821eac41b48b256475a174c87701
+[33m1771619267[39m
+Transaction mined in 71.84999990463257 seconds
+Transaction Receipt: {
+  blockHash: [32m'0xd597e8dcc2489eb6597467118e6b1a215b76fae8c710b3c624cee7bbf88a5914'[39m,
+  blockNumber: [33m512n[39m,
+  cumulativeGasUsed: [33m21000n[39m,
+  effectiveGasPrice: [33m20000000000n[39m,
+  from: [32m'0x8943545177806ed17b9f23f0a21ee5948ecaa776'[39m,
+  gasUsed: [33m21000n[39m,
+  logs: [],
+  logsBloom: [32m'0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'[39m,
+  status: [33m1n[39m,
+  to: [32m'0x614561d2d143621e126e87831aef287678b442b8'[39m,
+  transactionHash: [32m'0x28bff5e41b995a9f977c686b9a5340cde5c5821eac41b48b256475a174c87701'[39m,
+  transactionIndex: [33m0n[39m,
+  type: [33m0n[39m
+}
+Transaction object:  {
+  from: [32m'0x8943545177806ED17B9F23F0a21ee5948eCaa776'[39m,
+  to: [32m'0x614561D2d143621E126e87831AEF287678B442b8'[39m,
+  value: [32m'100000000000000000'[39m,
+  gas: [32m'21000'[39m,
+  gasPrice: [32m'20000000000'[39m,
+  nonce: [32m'7'[39m
+}
+[33m1771619267.292[39m
+{
+  messageHash: [32m'0x906016a52fa716dccab9f84d44e01e0d831699013c6749e7186341be807ebdf0'[39m,
+  v: [32m'0x60306b'[39m,
+  r: [32m'0x1c7ac0297421aa0e87cfb91e1ff5bbd600e40632899cb7127fbe91f67da4c4f9'[39m,
+  s: [32m'0x7de34c5d2ed1bfb00f19d36564d3fa7eb530d4ba6080cc238f9bdb294aa84539'[39m,
+  rawTransaction: [32m'0xf86f078504a817c80082520894614561d2d143621e126e87831aef287678b442b888016345785d8a0000808360306ba01c7ac0297421aa0e87cfb91e1ff5bbd600e40632899cb7127fbe91f67da4c4f9a07de34c5d2ed1bfb00f19d36564d3fa7eb530d4ba6080cc238f9bdb294aa84539'[39m,
+  transactionHash: [32m'0xe41ab1da34576c4be27da5cae764878dcd94abf5644b4b007e1

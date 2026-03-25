@@ -1,0 +1,17 @@
+chain = { genesis_time_secs = {{ .Timestamp }}, path = "{{ .Network }}" }
+
+[pbs]
+host = "0.0.0.0"
+port = {{ .Port }}
+
+{{ range $index, $relay := .Relays }}
+[[relays]]
+id = "mev_relay_{{$index}}"
+url = "{{ $relay }}"
+{{- end }}
+
+[logs.stdout]
+level = "debug"
+
+[logs.file]
+enabled=false

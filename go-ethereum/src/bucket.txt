@@ -1,0 +1,101 @@
+// Copyright 2025
+
+package bucket
+
+import (
+	"fmt"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+)
+
+// Data for storing transaction metadata
+type TxInfo struct {
+	digest   int // TODO: update to digest struct/type
+	realTime bool
+}
+
+// Bucket stores txs in bucketed maps.
+type Bucket struct {
+	buckets       map[int]map[common.Hash]*TxInfo
+	futureBucket  map[common.Hash]*TxInfo
+	limit         int
+	activeBucket  int
+	bucketPolicy  *BucketPolicyInfo
+}
+
+// New creates a new Bucket framework.
+func New() *Bucket {
+	b := &Bucket{
+		buckets:      make(map[int]map[common.Hash]*TxInfo),
+		futureBucket: make(map[common.Hash]*TxInfo),
+		limit:        0,
+		activeBucket: 0,
+		bucketPolicy: NewPolicy(),
+	}
+
+	// start with bucket 0
+	b.buckets[0] = make(map[common.Hash]*TxInfo)
+	return b
+}
+
+func (b *Bucket) addTx(tx *types.Transaction) {
+	// Choose bucket based on hash (hardcode 0 for now)
+	choice := 0
+
+	// Hardcode: only allow first 2 txs for now
+	if b.limit >= 2 {
+		return
+	}
+	b.limit++
+
+	info := &TxInfo{
+		digest:   0,
+		realTime: false,
+	}
+
+	decision := b.bucketPolicy.CheckTransaction(tx)
+	if decision == 2 {
+		// throw away
+		return
+	}
+	if decision == 1 {
+		// future bucket (keyed by tx hash for now)
+		b.futureBucket[tx.Hash()] = info
+		return
+	}
+	if decision != 0 {
+		fmt.Println("Error in bucket policy")
+		return
+	}
+
+	// normal bucket insert
+	if _, ok := b.buckets[choice]; !ok {
+		b.buckets[choice] = make(map[common.Hash]*TxInfo)
+	}
+	b.buckets[choice][tx.Hash()] = info
+}
+
+// Check if the active bucket has the transaction
+func (b *Bucket) hasTx(txHash common.Hash) bool {
+	m, ok := b.buckets[b.activeBucket]
+	if !ok {
+		return false
+	}
+	_, ok = m[txHash]
+	return ok
+}
+
+// After worker completes tx update digest info
+func (b *Bucket) updateDigest(txDigest int, txHash common.Hash, bucketID int, realTime bool) {
+	m, ok := b.buckets[bucketID]
+	if !ok {
+		return
+	}
+	info, ok := m[txHash]
+	if !ok || info == nil {
+		return
+	}
+	info.digest = txDigest
+	info.realTime = realTime
+}

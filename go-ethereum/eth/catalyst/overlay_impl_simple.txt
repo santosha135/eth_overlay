@@ -1,0 +1,50 @@
+package catalyst
+
+import (
+	"context"
+	"sync"
+
+	"github.com/ethereum/go-ethereum/beacon/engine"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/miner"
+)
+
+// OverlaySvc is a simple in-memory store mapping payloadID -> merged tx list.
+// Something else in your system is responsible for populating SetPayloadTxs.
+type OverlaySvc struct {
+	mu  sync.RWMutex
+	txs map[engine.PayloadID][]*types.Transaction
+}
+
+func NewOverlaySvc() *OverlaySvc {
+	return &OverlaySvc{txs: make(map[engine.PayloadID][]*types.Transaction)}
+}
+
+// SetPayloadTxs overwrites the tx snapshot for a payload ID.
+func (o *OverlaySvc) SetPayloadTxs(id engine.PayloadID, txs []*types.Transaction) {
+	// Snapshot to avoid races if caller mutates the slice
+	cp := append([]*types.Transaction(nil), txs...)
+
+	o.mu.Lock()
+	o.txs[id] = cp
+	o.mu.Unlock()
+}
+
+func (o *OverlaySvc) BeginSlot(ctx context.Context, id engine.PayloadID, args *miner.BuildPayloadArgs) {
+	o.mu.RLock()
+	txs := o.txs[id]
+	o.mu.RUnlock()
+
+	// Attach the factory. If nil/empty, miner falls back to txpool (overlay-first),
+	// or builds empty (overlay-only), depending on your fillTransactions logic.
+	if len(txs) != 0 {
+		args.TxSource = &miner.SliceTxSourceFactory{Txs: txs}
+	}
+}
+
+func (o *OverlaySvc) EndSlot(id engine.PayloadID) {
+	o.mu.Lock()
+	delete(o.txs, id)
+	o.mu.Unlock()
+}

@@ -1,0 +1,9 @@
+{
+  "enabled": true,
+  "reject_any_hardcoded": false,
+  "reject_zero_address": false,
+  "blocked": [
+    "0x8943545177806ED17B9F23f0a21ee5948eCaa776"
+  ],
+  "allow_hardcoded": []
+}

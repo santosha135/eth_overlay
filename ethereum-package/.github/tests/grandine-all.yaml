@@ -1,0 +1,15 @@
+participants:
+  - el_type: geth
+    cl_type: grandine
+  - el_type: nethermind
+    cl_type: grandine
+  - el_type: erigon
+    cl_type: grandine
+  - el_type: besu
+    cl_type: grandine
+  - el_type: reth
+    cl_type: grandine
+  - el_type: ethrex
+    cl_type: grandine
+  - el_type: nimbus
+    cl_type: grandine

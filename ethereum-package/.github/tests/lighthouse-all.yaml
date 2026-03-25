@@ -1,0 +1,15 @@
+participants:
+  - el_type: geth
+    cl_type: lighthouse
+  - el_type: nethermind
+    cl_type: lighthouse
+  - el_type: erigon
+    cl_type: lighthouse
+  - el_type: besu
+    cl_type: lighthouse
+  - el_type: reth
+    cl_type: lighthouse
+  - el_type: ethrex
+    cl_type: lighthouse
+  - el_type: nimbus
+    cl_type: lighthouse

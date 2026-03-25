@@ -1,0 +1,1065 @@
+diff --git a/core/txpool/blobpool/blobpool.go b/core/txpool/blobpool/blobpool.go
+index 3947ba50a..055525259 100644
+--- a/core/txpool/blobpool/blobpool.go
++++ b/core/txpool/blobpool/blobpool.go
+@@ -30,6 +30,7 @@ import (
+ 	"sync/atomic"
+ 	"time"
+ 
++
+ 	"github.com/ethereum/go-ethereum/common"
+ 	"github.com/ethereum/go-ethereum/consensus/misc/eip1559"
+ 	"github.com/ethereum/go-ethereum/consensus/misc/eip4844"
+@@ -358,7 +359,9 @@ type BlobPool struct {
+ 	discoverFeed event.Feed // Event feed to send out new tx events on pool discovery (reorg excluded)
+ 	insertFeed   event.Feed // Event feed to send out new tx events on pool inclusion (reorg included)
+ 
++	
+ 	lock sync.RWMutex // Mutex protecting the pool during reorg handling
++	bucketIdx   *txpool.BucketIndex
+ }
+ 
+ // New creates a new blob transaction pool to gather, sort and filter inbound
+@@ -381,6 +384,11 @@ func New(config Config, chain BlockChain, hasPendingAuth func(common.Address) bo
+ 	}
+ }
+ 
++func (p *BlobPool) SetBucketIndex(bucketIdx *txpool.BucketIndex) {
++	p.bucketIdx = bucketIdx
++	
++}
++
+ // Filter returns whether the given transaction can be consumed by the blob pool.
+ func (p *BlobPool) Filter(tx *types.Transaction) bool {
+ 	return p.FilterType(tx.Type())
+@@ -634,6 +642,9 @@ func (p *BlobPool) recheck(addr common.Address, inclusions map[common.Hash]uint6
+ 			p.stored -= uint64(txs[0].storageSize)
+ 			p.lookup.untrack(txs[0])
+ 
++			//TODO : add delete for bucket index
++			p.bucketIdx.Del(txs[0].hash)
++
+ 			// Included transactions blobs need to be moved to the limbo
+ 			if inclusions != nil {
+ 				p.offload(addr, txs[0].nonce, txs[0].id, inclusions)
+diff --git a/core/txpool/legacypool/legacypool.go b/core/txpool/legacypool/legacypool.go
+index 36970c820..ce836a29b 100644
+--- a/core/txpool/legacypool/legacypool.go
++++ b/core/txpool/legacypool/legacypool.go
+@@ -27,6 +27,9 @@ import (
+ 	"sync/atomic"
+ 	"time"
+ 
++
++
++	
+ 	"github.com/ethereum/go-ethereum/common"
+ 	"github.com/ethereum/go-ethereum/common/prque"
+ 	"github.com/ethereum/go-ethereum/consensus/misc/eip1559"
+@@ -235,6 +238,9 @@ type LegacyPool struct {
+ 	signer      types.Signer
+ 	mu          sync.RWMutex
+ 
++	
++	bucketIdx   *txpool.BucketIndex
++
+ 	currentHead   atomic.Pointer[types.Header] // Current head of the blockchain
+ 	currentState  *state.StateDB               // Current state in the blockchain head
+ 	pendingNonces *noncer                      // Pending state tracking virtual nonces
+@@ -288,6 +294,11 @@ func New(config Config, chain BlockChain) *LegacyPool {
+ 	return pool
+ }
+ 
++func (p *LegacyPool) SetBucketIndex(bucketIdx *txpool.BucketIndex) {
++	p.bucketIdx = bucketIdx
++
++}
++
+ // Filter returns whether the given transaction can be consumed by the legacy
+ // pool, specifically, whether it is a Legacy, AccessList or Dynamic transaction.
+ func (pool *LegacyPool) Filter(tx *types.Transaction) bool {
+@@ -1051,11 +1062,17 @@ func (pool *LegacyPool) Has(hash common.Hash) bool {
+ //
+ // Returns the number of transactions removed from the pending queue.
+ func (pool *LegacyPool) removeTx(hash common.Hash, outofbound bool, unreserve bool) int {
++	
++	
+ 	// Fetch the transaction we wish to delete
+ 	tx := pool.all.Get(hash)
+ 	if tx == nil {
+ 		return 0
+ 	}
++
++	//: add delete for bucket index
++	pool.bucketIdx.Del(hash)
++	
+ 	addr, _ := types.Sender(pool.signer, tx) // already validated during insertion
+ 
+ 	// If after deletion there are no more transactions belonging to this account,
+diff --git a/core/txpool/subpool.go b/core/txpool/subpool.go
+index db099ddf9..5df3ad800 100644
+--- a/core/txpool/subpool.go
++++ b/core/txpool/subpool.go
+@@ -181,6 +181,7 @@ type SubPool interface {
+ 	// identified by their hashes.
+ 	Status(hash common.Hash) TxStatus
+ 
++	SetBucketIndex(bucketIdx *BucketIndex) 
+ 	// Clear removes all tracked transactions from the pool
+ 	Clear()
+ }
+diff --git a/core/txpool/txpool.go b/core/txpool/txpool.go
+index a314a83f1..07a076836 100644
+--- a/core/txpool/txpool.go
++++ b/core/txpool/txpool.go
+@@ -17,11 +17,16 @@
+ package txpool
+ 
+ import (
++	"os"
+ 	"errors"
+ 	"fmt"
+ 	"math/big"
+ 	"sync"
+-
++	"encoding/binary"
++	"github.com/ethereum/go-ethereum/crypto"
++	"github.com/ethereum/go-ethereum/src/bucket"
++	// "github.com/ethereum/go-ethereum/src"
++	
+ 	"github.com/ethereum/go-ethereum/common"
+ 	"github.com/ethereum/go-ethereum/core"
+ 	"github.com/ethereum/go-ethereum/core/state"
+@@ -29,6 +34,7 @@ import (
+ 	"github.com/ethereum/go-ethereum/event"
+ 	"github.com/ethereum/go-ethereum/log"
+ 	"github.com/ethereum/go-ethereum/params"
++
+ )
+ 
+ // TxStatus is the current status of a transaction as seen by the pool.
+@@ -39,8 +45,11 @@ const (
+ 	TxStatusQueued
+ 	TxStatusPending
+ 	TxStatusIncluded
++	
+ )
+ 
++const futureBucketID = -1
++
+ // BlockChain defines the minimal set of methods needed to back a tx pool with
+ // a chain. Exists to allow mocking the live chain out of tests.
+ type BlockChain interface {
+@@ -74,6 +83,26 @@ type TxPool struct {
+ 	term chan struct{}           // Termination channel to detect a closed pool
+ 
+ 	sync chan chan error // Testing / simulator channel to block until internal reset is done
++	// bucket *bucket.Bucket
++
++	// ---- future bucket tracking (per sender) ----
++	futureMu sync.Mutex
++	future   map[common.Address]map[uint64]common.Hash // sender -> nonce -> txHash
++		// ---- bucket config ----
++	numBuckets     int
++	groupID        int
++	rotationBlocks uint64
++
++	// ---- leader config ----
++	leaderGating  bool
++	groupSize     int
++	myMemberIndex int
++
++	// ---- runtime ----
++	bucketSched *bucket.Scheduler
++	bucketIdx   *BucketIndex
++
++
+ }
+ 
+ // New creates a new transaction pool to gather, sort and filter inbound
+@@ -101,10 +130,47 @@ func New(gasTip uint64, chain BlockChain, subpools []SubPool) (*TxPool, error) {
+ 		quit:     make(chan chan error),
+ 		term:     make(chan struct{}),
+ 		sync:     make(chan chan error),
++		// bucket:   bucket.New(),
++	}
++
++	pool.future = make(map[common.Address]map[uint64]common.Hash)
++
++		// ---- BUCKET + LEADER CONFIG (static for now) ----
++	pool.numBuckets = 10
++	pool.groupID = 0              // TODO: set per node
++	pool.rotationBlocks = 1       // rotate every N blocks (1 = every block)
++
++	pool.leaderGating = true
++	pool.groupSize = 1            // TODO: number of miners/workers in this group
++	pool.myMemberIndex = 0        // TODO: unique id within group [0..groupSize-1]
++
++	pool.bucketSched = bucket.NewScheduler(pool.numBuckets, pool.groupID, pool.rotationBlocks)
++	pool.bucketIdx = newBucketIndex()
++	
++	// ---- ADDRESS POLICY (censorship + hard-coded address detection) ----
++	// Configure via env var GETH_CENSORSHIP_CONFIG (JSON file). If unset, defaults to ./blocked_addresses.json.
++	policyPath := os.Getenv("GETH_CENSORSHIP_CONFIG")
++	if policyPath == "" {
++		policyPath = "blocked_addresses.json"
++	}
++	if pol, err := LoadAddressPolicyJSON(policyPath); err != nil {
++		log.Warn("Address policy not loaded (continuing without it)", "path", policyPath, "err", err)
++	} else if pol != nil && pol.Enabled {
++		SetAddressPolicy(pol)
++		log.Info("Address policy loaded", "path", policyPath, "rejectAnyHardcoded", pol.RejectAnyHardcoded, "blocked", len(pol.BlockedMap))
++	} else {
++		log.Info("Address policy disabled", "path", policyPath)
++	}
++
++
++	if head != nil {
++		pool.bucketSched.SetHeadBlock(head.Number.Uint64())
+ 	}
++
+ 	reserver := NewReservationTracker()
+ 	for i, subpool := range subpools {
+ 		if err := subpool.Init(gasTip, head, reserver.NewHandle(i)); err != nil {
++			subpool.SetBucketIndex(pool.bucketIdx) // inject bucket index to subpools initialized so far
+ 			for j := i - 1; j >= 0; j-- {
+ 				subpools[j].Close()
+ 			}
+@@ -223,11 +289,23 @@ func (p *TxPool) loop(head *types.Header) {
+ 			// Chain moved forward, store the head for later consumption
+ 			newHead = event.Header
+ 
++			if p.bucketSched != nil && newHead != nil {
++				p.bucketSched.SetHeadBlock(newHead.Number.Uint64())
++			}
++
++
+ 		case head := <-resetDone:
+ 			// Previous reset finished, update the old head and allow a new reset
+ 			oldHead = head
++			if p.bucketSched != nil && oldHead != nil {
++				p.bucketSched.SetHeadBlock(oldHead.Number.Uint64())
++			}
++
+ 			<-resetBusy
+ 
++			// Block imported / head changed: nonce may have advanced, so promote future txs
++			p.promoteAllFuture()
++			
+ 			// If someone is waiting for a reset to finish, notify them, unless
+ 			// the forced op is still pending. In that case, wait another round
+ 			// of resets.
+@@ -305,6 +383,45 @@ func (p *TxPool) GetMetadata(hash common.Hash) *TxMetadata {
+ 	return nil
+ }
+ 
++// checkAddressPolicy enforces:
++// - reject if tx.To is blocked directly
++// - if contract creation: scan initcode
++// - if calling an existing contract: scan the deployed runtime bytecode from state
++func (p *TxPool) checkAddressPolicy(tx *types.Transaction) error {
++	pol := GetAddressPolicy()
++	if pol == nil || !pol.Enabled {
++		return nil
++	}
++
++	// Contract creation: tx.To() == nil → scan initcode (tx.Data)
++	to := tx.To()
++	if to == nil {
++		return pol.CheckTxAdmission(nil, tx.Data())
++	}
++
++	// 1) Direct censorship: tx.To is blocked
++	if _, blocked := pol.BlockedMap[*to]; blocked {
++		return fmt.Errorf("rejected: tx.To is blocked %s", to.Hex())
++	}
++
++	// 2) If it's a contract call, scan deployed runtime bytecode from current head state
++	p.stateLock.RLock()
++	code := p.state.GetCode(*to)
++	p.stateLock.RUnlock()
++
++	log.Info("Scanning contract runtime bytecode",
++    "contract", to.Hex(),
++    "codeSize", len(code))
++	
++	// If code length is 0, it's an EOA (not a contract), nothing to scan
++	if len(code) == 0 {
++		return nil
++	}
++
++	// Scan runtime bytecode for PUSH20 hard-coded addresses
++	return pol.CheckBytecodeBlocked(code)
++}
++
+ // Add enqueues a batch of transactions into the pool if they are valid. Due
+ // to the large transaction churn, add may postpone fully integrating the tx
+ // to a later point to batch multiple ones together.
+@@ -318,10 +435,78 @@ func (p *TxPool) Add(txs []*types.Transaction, sync bool) []error {
+ 	//
+ 	// We also need to track how the transactions were split across the subpools,
+ 	// so we can piece back the returned errors into the original order.
++	log.Info("Adding transactions to pool", "count", len(txs))
++	
++
++	// example policy (you should load these from config/flags)
++	// policy := AddressPolicy{
++	// 	RejectZeroAddress: true,
++	// 	Deny: map[common.Address]struct{}{
++	// 		// common.HexToAddress("0x..."): {},
++	// 	},
++	// }
++
+ 	txsets := make([][]*types.Transaction, len(p.subpools))
+ 	splits := make([]int, len(txs))
+ 
++	preErr := make([]error, len(txs))
++
++	localNext := make(map[common.Address]uint64, 128)
++	seenSender := make(map[common.Address]bool, 128)
++	sendersTouched := make(map[common.Address]struct{}, 128)
++
++
+ 	for i, tx := range txs {
++
++		//pre-check BEFORE subpool routing / bucket indexing
++		// if err := p.checkAddressPolicy(tx, policy); err != nil {
++		// 	splits[i] = -2        // special marker: rejected by policy
++		// 	preErr[i] = err
++		// 	continue
++		// }
++
++		// if pol := GetAddressPolicy(); pol != nil && pol.Enabled {
++		// if err := pol.CheckTxAdmission(tx); err != nil {
++		// 	splits[i] = -2
++		// 	preErr[i] = err
++		// 	continue
++		// }
++
++		//commented
++		// if pol := GetAddressPolicy(); pol != nil && pol.Enabled {
++		// 	// Contract creation: scan initcode (tx.Data())
++		// 	if tx.To() == nil {
++		// 		if err := pol.CheckTxAdmission(nil, tx.Data()); err != nil {
++		// 			splits[i] = -2
++		// 			preErr[i] = err
++		// 			continue
++		// 		}
++		// 	} else {
++		// 		// Call to existing address: scan deployed runtime bytecode from the pool's head state
++		// 		p.stateLock.RLock()
++		// 		err := pol.CheckCallTargetRuntime(p.state, *tx.To())
++		// 		p.stateLock.RUnlock()
++
++		// 		if err != nil {
++		// 			splits[i] = -2
++		// 			preErr[i] = err
++		// 			continue
++		// 		}
++		// 	}
++		// }
++
++	
++
++		if err := p.checkAddressPolicy(tx); err != nil {
++			splits[i] = -2
++			preErr[i] = err
++			log.Error("Rejecting tx in txpool by address policy",
++				"hash", tx.Hash(),
++				"err", err,
++			)
++			continue
++		}
++
+ 		// Mark this transaction belonging to no-subpool
+ 		splits[i] = -1
+ 
+@@ -333,25 +518,114 @@ func (p *TxPool) Add(txs []*types.Transaction, sync bool) []error {
+ 				break
+ 			}
+ 		}
++
++		//new bucket code 
++		// Index bucket mapping only if tx was assigned to some subpool
++		// if splits[i] != -1 && p.bucketIdx != nil && p.numBuckets > 0 {
++		// 		h := tx.Hash()
++		// 		bid := bucket.BucketForHash(h, p.numBuckets)
++		// 		log.Info("Assigning transaction to bucket", "hash", h, "bucketID", bid)
++		// 		p.bucketIdx.set(h, bid)
++		// }
++
++		// ---- sender-bucket + future-bucket assignment ----
++		if splits[i] != -1 && p.bucketIdx != nil && p.numBuckets > 0 {
++
++			// Recover sender
++			head := p.chain.CurrentBlock()
++			signer := types.MakeSigner(p.chain.Config(), head.Number, head.Time)
++			from, err := types.Sender(signer, tx)
++
++			sendersTouched[from] = struct{}{}
++			if err != nil {
++				// If we can't recover sender, fall back to hash-based bucket (or skip)
++				h := tx.Hash()
++				bid := bucket.BucketForHash(h, p.numBuckets)
++				p.bucketIdx.set(h, bid)
++			} else {
++				h := tx.Hash()
++
++				// Batch-local expected nonce tracker (so multiple txs from same sender in same Add call behave correctly)
++				// We'll keep it in a map outside the loop. See below.
++				expected := localNext[from]
++
++				// If this is the first time we see this sender in this batch, seed expected.
++				if expected == 0 && !seenSender[from] {
++					expected = p.PoolNonce(from)
++					if expected == 0 {
++						expected = p.Nonce(from)
++					}
++					localNext[from] = expected
++					seenSender[from] = true
++				}
++
++				n := tx.Nonce()
++
++				// If nonce is ahead of expected -> FUTURE bucket
++				if n > expected {
++					p.bucketIdx.set(h, futureBucketID)
++					p.trackFuture(from, n, h)
++					log.Info("Assigned tx to FUTURE bucket", "from", from, "hash", h, "nonce", n, "expected", expected)
++				} else {
++					// Normal bucket for sender (includes n==expected or replacement n<expected)
++					bid := p.bucketForSender(from)
++					p.bucketIdx.set(h, bid)
++					log.Info("Assigned tx to NORMAL sender bucket", "from", from, "hash", h, "bucketID", bid, "nonce", n, "expected", expected)
++
++					// If it matches expected, advance expected for this batch
++					if n == expected {
++						localNext[from] = expected + 1
++					}
++				}
++			}
++		}
+ 	}
+-	// Add the transactions split apart to the individual subpools and piece
+-	// back the errors into the original sort order.
++
++	// Add into subpools
+ 	errsets := make([][]error, len(p.subpools))
+ 	for i := 0; i < len(p.subpools); i++ {
+ 		errsets[i] = p.subpools[i].Add(txsets[i], sync)
+ 	}
++
++	// Reassemble errors
+ 	errs := make([]error, len(txs))
+ 	for i, split := range splits {
+-		// If the transaction was rejected by all subpools, mark it unsupported
++		if split == -2 { // rejected by your address policy
++			errs[i] = preErr[i]
++			continue
++		}
+ 		if split == -1 {
+ 			errs[i] = fmt.Errorf("%w: received type %d", core.ErrTxTypeNotSupported, txs[i].Type())
+ 			continue
+ 		}
+-		// Find which subpool handled it and pull in the corresponding error
+ 		errs[i] = errsets[split][0]
+ 		errsets[split] = errsets[split][1:]
+ 	}
++
++	// After transactions are added to subpools, try promoting any future txs that became ready.
++	for from := range sendersTouched {
++		p.promoteFutureIfReady(from)
++	}
+ 	return errs
++
++	// Add the transactions split apart to the individual subpools and piece
++	// back the errors into the original sort order.
++	// errsets := make([][]error, len(p.subpools))
++	// for i := 0; i < len(p.subpools); i++ {
++	// 	errsets[i] = p.subpools[i].Add(txsets[i], sync)
++	// }
++	// errs := make([]error, len(txs))
++	// for i, split := range splits {
++	// 	// If the transaction was rejected by all subpools, mark it unsupported
++	// 	if split == -1 {
++	// 		errs[i] = fmt.Errorf("%w: received type %d", core.ErrTxTypeNotSupported, txs[i].Type())
++	// 		continue
++	// 	}
++	// 	// Find which subpool handled it and pull in the corresponding error
++	// 	errs[i] = errsets[split][0]
++	// 	errsets[split] = errsets[split][1:]
++	// }
++	// return errs
+ }
+ 
+ // Pending retrieves all currently processable transactions, grouped by origin
+@@ -403,6 +677,110 @@ func (p *TxPool) Nonce(addr common.Address) uint64 {
+ 	return p.state.GetNonce(addr)
+ }
+ 
++// bucketForSender returns a deterministic bucket for an address.
++func (p *TxPool) bucketForSender(from common.Address) int {
++	if p.numBuckets <= 0 {
++		return 0
++	}
++	// keccak(address) then last 8 bytes mod N
++	h := crypto.Keccak256Hash(from.Bytes())
++	v := binary.BigEndian.Uint64(h[24:32])
++	return int(v % uint64(p.numBuckets))
++}
++
++// trackFuture remembers that tx is future (nonce > expected at time of admission).
++func (p *TxPool) trackFuture(from common.Address, nonce uint64, hash common.Hash) {
++	p.futureMu.Lock()
++	defer p.futureMu.Unlock()
++
++	m := p.future[from]
++	if m == nil {
++		m = make(map[uint64]common.Hash)
++		p.future[from] = m
++	}
++	m[nonce] = hash
++}
++
++// untrackFuture removes from future tracking.
++func (p *TxPool) untrackFuture(from common.Address, nonce uint64) {
++	p.futureMu.Lock()
++	defer p.futureMu.Unlock()
++
++	if m := p.future[from]; m != nil {
++		delete(m, nonce)
++		if len(m) == 0 {
++			delete(p.future, from)
++		}
++	}
++}
++
++// promoteFutureIfReady moves any future txs whose nonce has become "next" into normal sender bucket.
++// NOTE: This only updates the bucket index mapping; actual tx execution status is handled by subpools.
++func (p *TxPool) promoteFutureIfReady(from common.Address) {
++	if p.bucketIdx == nil {
++		return
++	}
++	// Determine the "next" nonce the pool expects now
++	next := p.PoolNonce(from)
++	if next == 0 {
++		next = p.Nonce(from)
++	}
++
++	for {
++		var h common.Hash
++		var ok bool
++
++		p.futureMu.Lock()
++		m := p.future[from]
++		if m != nil {
++			h, ok = m[next]
++			if ok {
++				delete(m, next)
++				if len(m) == 0 {
++					delete(p.future, from)
++				}
++			}
++		}
++		p.futureMu.Unlock()
++
++		if !ok {
++			return
++		}
++
++		// If tx disappeared (mined/evicted), clean mapping and continue
++		if !p.Has(h) {
++			p.bucketIdx.Del(h)
++			next++
++			continue
++		}
++
++		//TODO: implement overdraft solution
++		
++		// Promote bucket mapping: future -> normal sender bucket
++		bid := p.bucketForSender(from)
++		p.bucketIdx.set(h, bid)
++		log.Info("Promoted tx from future bucket to normal sender bucket", "from", from, "hash", h, "bucketID", bid, "nonce", next)
++
++		next++
++	}
++}
++
++// promoteAllFuture runs promotion for all senders that have future txs.
++// Call this after head resets (block import) to reflect nonce progression.
++func (p *TxPool) promoteAllFuture() {
++	// copy keys to avoid holding lock while calling PoolNonce/Has
++	p.futureMu.Lock()
++	addrs := make([]common.Address, 0, len(p.future))
++	for a := range p.future {
++		addrs = append(addrs, a)
++	}
++	p.futureMu.Unlock()
++
++	for _, a := range addrs {
++		p.promoteFutureIfReady(a)
++	}
++}
++
+ // Stats retrieves the current pool stats, namely the number of pending and the
+ // number of queued (non-executable) transactions.
+ func (p *TxPool) Stats() (int, int) {
+diff --git a/eth/catalyst/api.go b/eth/catalyst/api.go
+index e6ecf4ff6..daa4c45a8 100644
+--- a/eth/catalyst/api.go
++++ b/eth/catalyst/api.go
+@@ -26,7 +26,7 @@ import (
+ 	"sync/atomic"
+ 	"time"
+ 	"unicode"
+-
++	"context"
+ 	"github.com/ethereum/go-ethereum/beacon/engine"
+ 	"github.com/ethereum/go-ethereum/common"
+ 	"github.com/ethereum/go-ethereum/common/hexutil"
+@@ -43,16 +43,25 @@ import (
+ 	"github.com/ethereum/go-ethereum/params/forks"
+ 	"github.com/ethereum/go-ethereum/rlp"
+ 	"github.com/ethereum/go-ethereum/rpc"
++	"github.com/ethereum/go-ethereum/src/bucket"
+ )
+ 
+ // Register adds the engine API to the full node.
+ func Register(stack *node.Node, backend *eth.Ethereum) error {
++	api := NewConsensusAPI(backend)
++
+ 	stack.RegisterAPIs([]rpc.API{
+ 		{
+ 			Namespace:     "engine",
+-			Service:       NewConsensusAPI(backend),
++			Service:       api,
+ 			Authenticated: true,
+ 		},
++		//TODO: block build
++		{
++			Namespace: "overlay",
++			Service: NewOverlayRPC(api.overlay), 
++			Authenticated: false, // true for auth
++		},
+ 	})
+ 	return nil
+ }
+@@ -119,6 +128,12 @@ type ConsensusAPI struct {
+ 
+ 	forkchoiceLock sync.Mutex // Lock for the forkChoiceUpdated method
+ 	newPayloadLock sync.Mutex // Lock for the NewPayload method
++
++	overlay *OverlaySvc
++	// optional but useful to garbage collect per-slot state
++	activeSlotKey SlotKey
++	activePayloadID  engine.PayloadID
++	activePayloadSet bool	
+ }
+ 
+ // NewConsensusAPI creates a new consensus api for the given backend.
+@@ -137,12 +152,16 @@ func newConsensusAPIWithoutHeartbeat(eth *eth.Ethereum) *ConsensusAPI {
+ 	if eth.BlockChain().Config().TerminalTotalDifficulty == nil {
+ 		log.Warn("Engine API started but chain not configured for merge yet")
+ 	}
++
++	sched := bucket.NewScheduler(bucket.DefaultNumBuckets, /*groupID*/ 0, /*rotationBlocks*/ 1)
++
+ 	api := &ConsensusAPI{
+ 		eth:               eth,
+ 		remoteBlocks:      newHeaderQueue(),
+ 		localBlocks:       newPayloadQueue(),
+ 		invalidBlocksHits: make(map[common.Hash]int),
+ 		invalidTipsets:    make(map[common.Hash]*types.Header),
++		overlay:           NewOverlaySvc(sched), // from overlay_impl.go
+ 	}
+ 	eth.Downloader().SetBadBlockCallback(api.setInvalidAncestor)
+ 	return api
+@@ -345,11 +364,55 @@ func (api *ConsensusAPI) forkchoiceUpdated(update engine.ForkchoiceStateV1, payl
+ 			Version:      payloadVersion,
+ 		}
+ 		id := args.Id()
++		
+ 		// If we already are busy generating this work, then we do not need
+ 		// to start a second process.
+ 		if api.localBlocks.has(id) {
+ 			return valid(&id), nil
+ 		}
++
++		//START block build
++		// End previous slot overlay state if we moved to a new payload id
++		if api.activePayloadSet && api.activePayloadID != id && api.overlay != nil {
++			api.overlay.EndSlot(api.activeSlotKey)
++		}
++
++		api.activePayloadID = id
++		api.activePayloadSet = true
++
++		if api.overlay != nil {
++			// epoch derived from parent number, not head number after sethead.
++			parent := api.eth.BlockChain().GetBlockByHash(update.HeadBlockHash)
++			var parentNum uint64
++			if parent != nil {
++				parentNum = parent.NumberU64()
++			}
++
++			epoch := parentNum / api.overlay.scheduler.RotationBlocks()
++
++			slot := SlotKey{
++				Parent:  update.HeadBlockHash,
++				Time:    payloadAttributes.Timestamp,
++				Version: payloadVersion,
++			}
++			api.activeSlotKey = slot
++
++			lite := &OverlayArgs{
++				Parent:       update.HeadBlockHash,
++				Timestamp:    payloadAttributes.Timestamp,
++				FeeRecipient: payloadAttributes.SuggestedFeeRecipient,
++				Random:       payloadAttributes.Random,
++				Withdrawals:  payloadAttributes.Withdrawals,
++				BeaconRoot:   payloadAttributes.BeaconRoot,
++				Version:      	payloadVersion,
++			}
++			api.overlay.SetActiveSlot(slot, epoch, lite)
++			api.overlay.BeginSlot(context.Background(), slot, args)
++		}
++
++		//END: Block build
++
++
+ 		payload, err := api.eth.Miner().BuildPayload(args, payloadWitness)
+ 		if err != nil {
+ 			log.Error("Failed to build payload", "err", err)
+diff --git a/miner/payload_building.go b/miner/payload_building.go
+index 6b010186b..7bf872725 100644
+--- a/miner/payload_building.go
++++ b/miner/payload_building.go
+@@ -33,6 +33,10 @@ import (
+ 	"github.com/ethereum/go-ethereum/rlp"
+ )
+ 
++type FragmentProvider interface {
++	GetFragment(bucketID uint32) ([]*types.Transaction, common.Hash, bool)
++}
++
+ // BuildPayloadArgs contains the provided parameters for building payload.
+ // Check engine-api specification for more details.
+ // https://github.com/ethereum/execution-apis/blob/main/src/engine/cancun.md#payloadattributesv3
+@@ -44,6 +48,10 @@ type BuildPayloadArgs struct {
+ 	Withdrawals  types.Withdrawals     // The provided withdrawals
+ 	BeaconRoot   *common.Hash          // The provided beaconRoot (Cancun)
+ 	Version      engine.PayloadVersion // Versioning byte for payload id calculation.
++    TxSource	 TxSourceFactory 	   // nil => default to txpool, might remove
++	FragmentKey      common.Hash
++    FragPro 	 FragmentProvider  	   // Interfact to attain fragments from the leaders
++    NumBuckets uint32 
+ }
+ 
+ // Id computes an 8-byte identifier by hashing the components of the payload arguments.
+@@ -219,6 +227,10 @@ func (miner *Miner) buildPayload(args *BuildPayloadArgs, witness bool) (*Payload
+ 		withdrawals: args.Withdrawals,
+ 		beaconRoot:  args.BeaconRoot,
+ 		noTxs:       true,
++		txSource:	 args.TxSource,
++		payloadID:	 args.Id(),
++		fragPro: 	 args.FragPro,
++		numBuckets:  args.NumBuckets,		
+ 	}
+ 	empty := miner.generateWork(emptyParams, witness)
+ 	if empty.err != nil {
+@@ -249,6 +261,10 @@ func (miner *Miner) buildPayload(args *BuildPayloadArgs, witness bool) (*Payload
+ 			withdrawals: args.Withdrawals,
+ 			beaconRoot:  args.BeaconRoot,
+ 			noTxs:       false,
++			txSource:	 args.TxSource,
++			payloadID: 	 args.Id(),
++			fragPro: 	 args.FragPro,
++			numBuckets:  args.NumBuckets,			
+ 		}
+ 
+ 		for {
+diff --git a/miner/worker.go b/miner/worker.go
+index 45d7073ed..e69eba63a 100644
+--- a/miner/worker.go
++++ b/miner/worker.go
+@@ -32,6 +32,7 @@ import (
+ 	"github.com/ethereum/go-ethereum/core/txpool"
+ 	"github.com/ethereum/go-ethereum/core/types"
+ 	"github.com/ethereum/go-ethereum/core/vm"
++    "github.com/ethereum/go-ethereum/beacon/engine"
+ 	"github.com/ethereum/go-ethereum/log"
+ 	"github.com/ethereum/go-ethereum/params"
+ 	"github.com/holiman/uint256"
+@@ -112,6 +113,126 @@ type generateParams struct {
+ 	withdrawals types.Withdrawals // List of withdrawals to include in block (shanghai field)
+ 	beaconRoot  *common.Hash      // The beacon root (cancun field).
+ 	noTxs       bool              // Flag whether an empty block without any transaction is expected
++    txSource    TxSourceFactory
++    payloadID   engine.PayloadID  // Used to find the correct block fragments
++    fragPro 	FragmentProvider  // Interface to collect the block fragments
++    numBuckets  uint32	
++}
++
++func (miner *Miner) applyVerifiedFragments(env *environment, fp FragmentProvider, numBuckets uint32) {
++
++	// // Ensure gas pool exists
++	// if env.gasPool == nil {
++	// 	env.gasPool = new(core.GasPool).AddGas(env.header.GasLimit)
++	// }
++
++	// for bucket := uint32(0); bucket < numBuckets; bucket++ {
++	// 	txs, wantRoot, ok := fp.GetFragment(bucket)
++	// 	if !ok || len(txs) == 0 {
++	// 		continue
++	// 	}
++
++	// 	// Snapshot so we can rollback only this fragment if it fails.
++	// 	snap := env.state.Snapshot()
++	// 	gp := env.gasPool.Gas()
++
++	// 	okFrag := true
++	// 	for _, tx := range txs {
++	// 		if tx == nil {
++	// 			continue
++	// 		}
++	// 		// obey block size cap
++	// 		if !env.txFitsSize(tx) {
++	// 			okFrag = false
++	// 			break
++	// 		}
++	// 		// set tx context and execute
++	// 		env.state.SetTxContext(tx.Hash(), env.tcount)
++	// 		if err := miner.commitTransaction(env, tx); err != nil {
++	// 			okFrag = false
++	// 			break
++	// 		}
++	// 	}
++
++	// 	if okFrag {
++	// 		// Compare resulting state root against fragment claim.
++	// 		// This matches how StateDB root is computed under EIP-158 rules.
++	// 		got := env.state.IntermediateRoot(miner.chainConfig.IsEIP158(env.header.Number))
++	// 		if got != wantRoot {
++	// 			okFrag = false
++	// 		}
++	// 	}
++
++	// 	if !okFrag {
++	// 		env.state.RevertToSnapshot(snap)
++	// 		env.gasPool.SetGas(gp)
++	// 		// fallback: do nothing; txpool fill will cover the gap
++	// 		continue
++	// 	}
++	// }
++	if env.gasPool == nil {
++		env.gasPool = new(core.GasPool).AddGas(env.header.GasLimit)
++	}
++
++	for bucket := uint32(0); bucket < numBuckets; bucket++ {
++		txs, wantRoot, ok := fp.GetFragment(bucket)
++		if !ok || len(txs) == 0 {
++			continue
++		}
++
++		snap := env.state.Snapshot()
++		gp := env.gasPool.Gas()
++
++		okFrag := true
++		for _, tx := range txs {
++			if tx == nil {
++				continue
++			}
++			if !env.txFitsSize(tx) {
++				okFrag = false
++				break
++			}
++
++			// ---- ADDRESS POLICY CHECK: REQUIRED HERE TOO ----
++			if pol := txpool.GetAddressPolicy(); pol != nil && pol.Enabled {
++				if to := tx.To(); to == nil {
++					// contract creation: scan initcode
++					if err := pol.CheckTxAdmission(nil, tx.Data()); err != nil {
++						log.Info("Rejecting fragment tx by address policy (creation/initcode)",
++							"hash", tx.Hash(), "err", err)
++						okFrag = false
++						break
++					}
++				} else {
++					// existing contract call: scan deployed runtime code
++					if err := pol.CheckCallTargetRuntime(env.state, *to); err != nil {
++						log.Info("Rejecting fragment tx by address policy (runtime bytecode)",
++							"hash", tx.Hash(), "to", *to, "err", err)
++						okFrag = false
++						break
++					}
++				}
++			}
++
++			env.state.SetTxContext(tx.Hash(), env.tcount)
++			if err := miner.commitTransaction(env, tx); err != nil {
++				okFrag = false
++				break
++			}
++		}
++
++		if okFrag {
++			gotRoot := env.state.IntermediateRoot(miner.chainConfig.IsEIP158(env.header.Number))
++			if gotRoot != wantRoot {
++				okFrag = false
++			}
++		}
++
++		if !okFrag {
++			env.state.RevertToSnapshot(snap)
++			env.gasPool.SetGas(gp)
++		}
++	}
+ }
+ 
+ // generateWork generates a sealing block based on the given parameters.
+@@ -138,7 +259,17 @@ func (miner *Miner) generateWork(genParam *generateParams, witness bool) *newPay
+ 		})
+ 		defer timer.Stop()
+ 
++		//START: Merge leader block
++		// Optimistic fragment verify: re-exec fragment txs only, compare post-root.
++		// If fragment fails, revert and keep going (fallback is normal txpool fill).
++		if !genParam.noTxs && genParam.fragPro != nil && genParam.numBuckets != 0 {
++			miner.applyVerifiedFragments(work, genParam.fragPro, genParam.numBuckets)
++		}
++		//END: Merge leader block
++
+ 		err := miner.fillTransactions(interrupt, work)
++		//TODO Add back, comment above
++		//err := miner.fillTransactions(interrupt, work, genParam.txSource)
+ 		if errors.Is(err, errBlockInterruptedByTimeout) {
+ 			log.Warn("Block building is interrupted", "allowance", common.PrettyDuration(miner.config.Recommit))
+ 		}
+@@ -260,6 +391,12 @@ func (miner *Miner) prepareWork(genParams *generateParams, witness bool) (*envir
+ 		log.Error("Failed to create sealing context", "err", err)
+ 		return nil, err
+ 	}
++
++	//TODO: Add back
++	// if miner.overlay != nil { 
++	// 	env.txSource = miner.overlay.TxSourceForEnv(header) 
++	// }
++
+ 	if header.ParentBeaconRoot != nil {
+ 		core.ProcessBeaconBlockRoot(*header.ParentBeaconRoot, env.evm)
+ 	}
+@@ -445,14 +582,30 @@ func (miner *Miner) commitTransactions(env *environment, plainTxs, blobTxs *tran
+ 			txs.Pop()
+ 			continue
+ 		}
++
++		log.Info("Before execution")
++			// Address policy runtime gate: if this tx calls a contract, scan its runtime bytecode
++		if pol := txpool.GetAddressPolicy(); pol != nil && pol.Enabled {
++			if to := tx.To(); to != nil {
++				if err := pol.CheckCallTargetRuntime(env.state, *to); err != nil {
++					log.Info("Skipping tx by address policy (runtime bytecode)", "hash", ltx.Hash, "to", to, "err", err)
++					txs.Pop()
++					continue
++				}
++			}
++		}
++
+ 		// Start executing the transaction
++
+ 		env.state.SetTxContext(tx.Hash(), env.tcount)
+ 
+ 		err := miner.commitTransaction(env, tx)
++		log.Info("commitTransaction result", "hash", ltx.Hash, "err", err)
+ 		switch {
+ 		case errors.Is(err, core.ErrNonceTooLow):
+ 			// New head notification data race between the transaction pool and miner, shift
+ 			log.Trace("Skipping transaction with low nonce", "hash", ltx.Hash, "sender", from, "nonce", tx.Nonce())
++			log.Info("Skipping transaction with low nonce", "hash", ltx.Hash, "sender", from, "nonce", tx.Nonce())
+ 			txs.Shift()
+ 
+ 		case errors.Is(err, nil):
+@@ -473,11 +626,58 @@ func (miner *Miner) commitTransactions(env *environment, plainTxs, blobTxs *tran
+ // into the given sealing block. The transaction selection and ordering strategy can
+ // be customized with the plugin in the future.
+ func (miner *Miner) fillTransactions(interrupt *atomic.Int32, env *environment) error {
++//TODO add bottom, then comment top
++// func (miner *Miner) fillTransactions(interrupt *atomic.Int32, env *environment, factory TxSourceFactory) error
++
++
++
+ 	miner.confMu.RLock()
+ 	tip := miner.config.GasPrice
+ 	prio := miner.prio
+ 	miner.confMu.RUnlock()
+ 
++
++    // TODO: Add back
++	//START: Block building
++	// Overlay path: deterministic tx list supplied externally
++	// if src != nil {
++	// 	for {
++	// 		if interrupt != nil {
++	// 			if signal := interrupt.Load(); signal != commitInterruptNone {
++	// 				return signalToErr(signal)
++	// 			}
++	// 		}
++	// 		if env.gasPool == nil {
++	// 			env.gasPool = new(core.GasPool).AddGas(env.header.GasLimit)
++	// 		}
++	// 		if env.gasPool.Gas() < params.TxGas {
++	// 			return nil
++	// 		}
++
++	// 		txs, done, err := src.Next(512) // batch size is arbitrary
++	// 		if err != nil {
++	// 			return err
++	// 		}
++	// 		for _, tx := range txs {
++	// 			if tx == nil {
++	// 				continue
++	// 			}
++	// 			if !env.txFitsSize(tx) {
++	// 				return nil
++	// 			}
++	// 			env.state.SetTxContext(tx.Hash(), env.tcount)
++	// 			if err := miner.commitTransaction(env, tx); err != nil {
++	// 				// mimic pool behavior: skip bad tx, continue
++	// 				continue
++	// 			}
++	// 		}
++	// 		if done {
++	// 			return nil
++	// 		}
++	// 	}
++	// }
++	//END: Block building
++
+ 	// Retrieve the pending transactions pre-filtered by the 1559/4844 dynamic fees
+ 	filter := txpool.PendingFilter{
+ 		MinTip: uint256.MustFromBig(tip),
+@@ -492,7 +692,10 @@ func (miner *Miner) fillTransactions(interrupt *atomic.Int32, env *environment)
+ 		filter.GasLimitCap = params.MaxTxGas
+ 	}
+ 	filter.BlobTxs = false
+-	pendingPlainTxs := miner.txpool.Pending(filter)
++	// pendingPlainTxs := miner.txpool.Pending(filter)
++	pendingPlainTxs := miner.txpool.PendingActiveBucket(filter)
++
++	log.Info("Pending transactions before bucket filtering", "plain", len(pendingPlainTxs))
+ 
+ 	filter.BlobTxs = true
+ 	if miner.chainConfig.IsOsaka(env.header.Number, env.header.Time) {
+@@ -500,8 +703,11 @@ func (miner *Miner) fillTransactions(interrupt *atomic.Int32, env *environment)
+ 	} else {
+ 		filter.BlobVersion = types.BlobSidecarVersion0
+ 	}
+-	pendingBlobTxs := miner.txpool.Pending(filter)
++	// pendingBlobTxs := miner.txpool.Pending(filter)
++	pendingBlobTxs := miner.txpool.PendingActiveBucket(filter)
+ 
++	log.Info("Pending blob transactions before bucket filtering", "blob", len(pendingBlobTxs))
++	
+ 	// Split the pending transactions into locals and remotes.
+ 	prioPlainTxs, normalPlainTxs := make(map[common.Address][]*txpool.LazyTransaction), pendingPlainTxs
+ 	prioBlobTxs, normalBlobTxs := make(map[common.Address][]*txpool.LazyTransaction), pendingBlobTxs

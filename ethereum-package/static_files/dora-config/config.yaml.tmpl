@@ -1,0 +1,116 @@
+
+logging:
+  outputLevel: "info"
+
+# Chain network configuration
+chain:
+  displayName: "{{ .Network }}"
+
+# HTTP Server configuration
+server:
+  host: "0.0.0.0" # Address to listen on
+  port: "8080" # Port to listen on
+
+frontend:
+  enabled: true # Enable or disable to web frontend
+  debug: false
+  pprof: true
+  minimize: false # minimize html templates
+  disablePageCache: true
+
+  # Name of the site, displayed in the title tag
+  siteName: "Dora the Explorer"
+  siteSubtitle: "{{ .Network }} - Kurtosis"
+
+  # link to EL Explorer
+  ethExplorerLink: ""
+
+  # file or inventory url to load validator names from
+{{- if .IsDevnet }}
+  validatorNamesInventory: "https://config.{{ .Network }}.ethpandaops.io/api/v1/nodes/validator-ranges"
+{{- else }}
+  validatorNamesYaml: "/validator-ranges/validator-ranges.yaml"
+{{- end }}
+
+  rainbowkitProjectId: "15fe4ab4d5c0bcb6f0dc7c398301ff0e"
+  showSubmitDeposit: true
+  showSubmitElRequests: true
+  showPeerDASInfos: true
+  showSensitivePeerInfos: true
+  disableDasGuardianCheck: false
+  enableDasGuardianMassScan: true
+  showValidatorSummary: true
+
+api:
+  enabled: true
+  corsOrigins:
+    - "*"
+
+rpcProxy:
+  enabled: true
+  upstreamUrl: "{{ .PublicRPC }}"
+
+beaconapi:
+  # CL Client RPC
+  endpoints:
+{{ range $clClient := .CLClientInfo }}
+    - url: "{{ $clClient.Beacon_HTTP_URL }}"
+      name: "{{ $clClient.FullName }}"
+      archive: true
+{{- end }}
+  # local cache for page models
+  localCacheSize: 10 # 10MB
+
+  # remote cache for page models
+  redisCacheAddr: ""
+  redisCachePrefix: ""
+
+executionapi:
+  genesisConfig: "/network-configs/genesis.json"
+  endpoints:
+{{ range $elClient := .ELClientInfo }}
+    - url: "{{ $elClient.Execution_HTTP_URL }}"
+      engineSnooperUrl: "{{ $elClient.Execution_Engine_Snooper_URL }}"
+      name: "{{ $elClient.FullName }}"
+      archive: true
+{{- end }}
+  depositLogBatchSize: 1000
+
+# indexer keeps track of the latest epochs in memory.
+indexer:
+  # max number of epochs to keep in memory
+  inMemoryEpochs: 8
+
+  # disable synchronizing historic data
+  disableSynchronizer: false
+
+  # reset synchronization state to this epoch on startup - only use to resync database, comment out afterwards
+  #resyncFromEpoch: 0
+
+  # force re-synchronization of epochs that are already present in DB - only use to fix missing data after schema upgrades
+  #resyncForceUpdate: true
+
+  # number of seconds to pause the synchronization between each epoch (don't overload CL client)
+  syncEpochCooldown: 1
+
+  # maximum number of parallel beacon state requests (might cause high memory usage)
+  maxParallelValidatorSetRequests: 2
+
+mevIndexer:
+  # list of mev relays to crawl mev blocks from
+  relays: {{ if not .MEVRelayInfo }}[]{{ end }}
+{{ range $relay := .MEVRelayInfo }}
+    - index: {{ $relay.Index }}
+      name: "{{ $relay.Name }}"
+      url: "{{ $relay.Url }}"
+{{- end }}
+  refreshInterval: 5m
+
+executionIndexer:
+  enabled: true
+  retention: 168h # keep history for 1 week
+
+database:
+  engine: "sqlite"
+  sqlite:
+    file: "/dora-database.sqlite"

@@ -1,0 +1,40 @@
+package txpool
+
+import (
+	"sync"
+
+	"github.com/ethereum/go-ethereum/common"
+)
+
+type bucketIndex struct {
+	mu sync.RWMutex
+
+	numBuckets int
+	byHash     map[common.Hash]int // txHash -> bucketID
+}
+
+func newBucketIndex(numBuckets int) *bucketIndex {
+	return &bucketIndex{
+		numBuckets: numBuckets,
+		byHash:     make(map[common.Hash]int, 4096),
+	}
+}
+
+func (bi *bucketIndex) set(h common.Hash, bucketID int) {
+	bi.mu.Lock()
+	bi.byHash[h] = bucketID
+	bi.mu.Unlock()
+}
+
+func (bi *bucketIndex) get(h common.Hash) (int, bool) {
+	bi.mu.RLock()
+	b, ok := bi.byHash[h]
+	bi.mu.RUnlock()
+	return b, ok
+}
+
+func (bi *bucketIndex) del(h common.Hash) {
+	bi.mu.Lock()
+	delete(bi.byHash, h)
+	bi.mu.Unlock()
+}

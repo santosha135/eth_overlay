@@ -1,0 +1,53 @@
+// Copyright 2025
+
+package bucket
+
+import (
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+)
+
+// For now we will keep track of metrics.
+// Later we can add a limit to future bucket based on address.
+type BucketPolicyInfo struct {
+	totalOutOfSeq int
+	overdrafts    int
+
+	futureLimit int
+	futureMap   map[common.Address]int // address -> #future txs
+}
+
+// NewPolicy constructs a policy object. (Not Bucket.New)
+func NewPolicy() *BucketPolicyInfo {
+	return &BucketPolicyInfo{
+		totalOutOfSeq: 0,
+		overdrafts:    0,
+		futureLimit:   64,
+		futureMap:     make(map[common.Address]int),
+	}
+}
+
+// Returns 0 for normal transaction, 1 for future queue, and 2 for throw away.
+// NOTE: This is still a stub; your if(false) placeholders always skip.
+func (p *BucketPolicyInfo) CheckTransaction(tx *types.Transaction) int {
+	_ = tx
+
+	// Example placeholder logic:
+	// - return 1 if it is "future"
+	// - return 2 if it should be dropped
+	// - else 0 normal
+	return 0
+}
+
+// Add to the total count of current future txs for a given address.
+func (p *BucketPolicyInfo) AddToFuture(addr common.Address) {
+	p.futureMap[addr]++
+}
+
+// Remove the specified number of future txs for a given address, allows for batch removals.
+func (p *BucketPolicyInfo) RemoveFromFuture(addr common.Address, removed int) {
+	p.futureMap[addr] -= removed
+	if p.futureMap[addr] < 0 {
+		p.futureMap[addr] = 0
+	}
+}

@@ -3,53 +3,48 @@ import fs from 'fs';
 import { execSync } from 'child_process';
 
 function getKurtosisRpcUrl() {
-  let output = "";
+  const enclaveName = process.env.KURTOSIS_ENCLAVE || 'local-eth-testnet';
+  let output = '';
 
   try {
-    output = execSync('kurtosis service ls', {
+    output = execSync(`kurtosis enclave inspect ${enclaveName}`, {
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
     });
   } catch (err) {
-    throw new Error(`Failed to run "kurtosis service ls": ${err.message}`);
+    throw new Error(
+      `Failed to run "kurtosis enclave inspect ${enclaveName}": ${err.message}`
+    );
   }
 
-  console.log("===== kurtosis service ls output =====");
+  console.log(`===== kurtosis enclave inspect ${enclaveName} =====`);
   console.log(output);
-  console.log("======================================");
+  console.log('===================================================');
 
   const lines = output.split('\n');
-
   let inTargetService = false;
-  let targetServiceName = null;
+  let currentService = null;
 
   for (const rawLine of lines) {
     const line = rawLine.trimEnd();
 
-    // Detect service header lines like:
+    // Match a service header line such as:
     // 31338bb2767c   el-1-geth-lighthouse   engine-rpc: ...
     const serviceMatch = line.match(/^([a-f0-9]+)\s+([^\s]+)\s+/i);
     if (serviceMatch) {
-      const serviceName = serviceMatch[2];
-
-      // Adjust this if your EL node names differ
-      if (/^el-.*geth/i.test(serviceName)) {
-        inTargetService = true;
-        targetServiceName = serviceName;
-      } else {
-        inTargetService = false;
-        targetServiceName = null;
-      }
+      currentService = serviceMatch[2];
+      inTargetService = /^el-.*geth/i.test(currentService);
       continue;
     }
 
-    // While inside matching service block, look for rpc mapping
+    // While inside the EL geth service block, find the RPC mapping
     if (inTargetService) {
-      const rpcMatch = line.match(/rpc:\s*8545\/tcp\s*->\s*(?:127\.0\.0\.1|localhost):(\d+)/i);
+      const rpcMatch = line.match(
+        /rpc:\s*8545\/tcp\s*->\s*(?:http:\/\/)?(?:127\.0\.0\.1|localhost):(\d+)/i
+      );
       if (rpcMatch) {
-        const rpcPort = rpcMatch[1];
-        const rpcUrl = `http://127.0.0.1:${rpcPort}`;
-        console.log(`Matched Kurtosis service: ${targetServiceName}`);
+        const rpcUrl = `http://127.0.0.1:${rpcMatch[1]}`;
+        console.log(`Matched service : ${currentService}`);
         console.log(`Detected RPC URL: ${rpcUrl}`);
         return rpcUrl;
       }
@@ -57,9 +52,10 @@ function getKurtosisRpcUrl() {
   }
 
   throw new Error(
-    'Could not auto-detect Kurtosis geth RPC port. Check printed "kurtosis service ls" output above.'
+    `Could not auto-detect Kurtosis geth RPC port from enclave "${enclaveName}"`
   );
 }
+
 
 const rpcUrl = process.env.RPC_URL || getKurtosisRpcUrl();
 const web3 = new Web3(new Web3.providers.HttpProvider(rpcUrl));

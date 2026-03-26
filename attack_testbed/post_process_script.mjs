@@ -1,8 +1,23 @@
 import Web3 from 'web3';
 import fs from 'fs';
+import { execSync } from 'child_process';
 
-const rpcUrl = "http://127.0.0.1:32772";
+function getKurtosisRpcUrl() {
+  const output = execSync('kurtosis service ls', { encoding: 'utf8' });
+  const match = output.match(/el-.*geth[\s\S]*?rpc:\s*8545\/tcp\s*->\s*127\.0\.0\.1:(\d+)/i);
+
+  if (!match) {
+    throw new Error('Could not auto-detect Kurtosis geth RPC port');
+  }
+
+  return `http://127.0.0.1:${match[1]}`;
+}
+
+const rpcUrl = process.env.RPC_URL || getKurtosisRpcUrl();
 const web3 = new Web3(new Web3.providers.HttpProvider(rpcUrl));
+
+// const rpcUrl = "http://127.0.0.1:32772";
+// const web3 = new Web3(new Web3.providers.HttpProvider(rpcUrl));
 
 // Sender and recipient
 const fromAddress = "0x8943545177806ED17B9F23F0a21ee5948eCaa776";

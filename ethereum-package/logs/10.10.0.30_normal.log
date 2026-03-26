@@ -1,0 +1,8 @@
+[2026-03-26 17:12:22] ========== START TX RUN: 10.10.0.30 ==========
+[2026-03-26 15:12:22] Using monitor script : /home/narwhal/eth_overlay/ethereum-package/geth_proc_usage.sh
+[2026-03-26 15:12:22] Using tx script      : /home/narwhal/eth_overlay/attack_testbed/send_normal_transaction.mjs
+[2026-03-26 15:12:22] Monitor log          : /home/narwhal/eth_overlay/ethereum-package/logs/geth_proc_usage_normal.log
+[2026-03-26 15:12:22] TX run log           : /home/narwhal/eth_overlay/ethereum-package/logs/tx_run_normal.log
+[2026-03-26 15:12:22] Starting monitoring script in background
+[2026-03-26 15:12:24] Monitoring started with PID 310846
+[2026-03-26 15:12:24] ERROR: transaction script not found: /home/narwhal/eth_overlay/attack_testbed/send_normal_transaction.mjs

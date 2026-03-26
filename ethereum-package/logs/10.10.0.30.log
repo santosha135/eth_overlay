@@ -1,21 +1,20 @@
-[2026-03-26 16:38:53] ========== START: 10.10.0.30 ==========
-[2026-03-26 14:38:53] Detected architecture: x86_64
-[2026-03-26 14:38:53] Using package manager: dnf
-[2026-03-26 14:38:53] Refreshing package metadata
-AlmaLinux 9 - AppStream                          13 kB/s | 4.2 kB     00:00    
-AlmaLinux 9 - BaseOS                             11 kB/s | 3.8 kB     00:00    
+[2026-03-26 16:42:32] ========== START: 10.10.0.30 ==========
+[2026-03-26 14:42:32] Detected architecture: x86_64
+[2026-03-26 14:42:32] Using package manager: dnf
+[2026-03-26 14:42:32] Refreshing package metadata
+AlmaLinux 9 - AppStream                          11 kB/s | 4.2 kB     00:00    
+AlmaLinux 9 - BaseOS                             13 kB/s | 3.8 kB     00:00    
 AlmaLinux 9 - CRB                                13 kB/s | 4.2 kB     00:00    
 AlmaLinux 9 - Extras                             10 kB/s | 3.3 kB     00:00    
-Docker CE Stable - x86_64                        13 kB/s | 2.0 kB     00:00    
-Extra Packages for Enterprise Linux 9 - x86_64   89 kB/s |  26 kB     00:00    
-Extra Packages for Enterprise Linux 9 openh264  4.3 kB/s | 993  B     00:00    
-google-chrome                                   9.3 kB/s | 1.3 kB     00:00    
+Docker CE Stable - x86_64                        10 kB/s | 2.0 kB     00:00    
+Extra Packages for Enterprise Linux 9 - x86_64   78 kB/s |  26 kB     00:00    
+Extra Packages for Enterprise Linux 9 openh264  2.7 kB/s | 993  B     00:00    
+google-chrome                                   5.0 kB/s | 1.3 kB     00:00    
 Kurtosis                                        3.5 kB/s | 942  B     00:00    
-Oracle Linux / RHEL / CentOS-9 / x86_64 - Virtu  23 kB/s | 2.9 kB     00:00    
-Visual Studio Code                              9.2 kB/s | 1.5 kB     00:00    
+Oracle Linux / RHEL / CentOS-9 / x86_64 - Virtu 8.6 kB/s | 2.9 kB     00:00    
+Visual Studio Code                              8.6 kB/s | 1.5 kB     00:00    
 Metadata cache created.
-[2026-03-26 14:38:56] Installing base packages
-Last metadata expiration check: 0:00:01 ago on Thu 26 Mar 2026 02:38:56 PM MDT.
+[2026-03-26 14:42:36] Installing base packages
 Package git-2.47.3-1.el9_6.x86_64 is already installed.
 Package curl-7.76.1-35.el9_7.3.x86_64 is already installed.
 Package wget-1.21.1-8.el9_4.x86_64 is already installed.
@@ -32,15 +31,15 @@ Package gcc-c++-11.5.0-11.el9.alma.1.x86_64 is already installed.
 Dependencies resolved.
 Nothing to do.
 Complete!
-[2026-03-26 14:38:57] node already installed: v20.19.5
-[2026-03-26 14:38:57] go already installed: go version go1.24.6 (Red Hat 1.24.6-1.el9_6) linux/amd64
-[2026-03-26 14:38:57] docker already installed: Docker version 29.2.1, build a5c7197
-[2026-03-26 14:38:57] docker version: Docker version 29.2.1, build a5c7197
-[2026-03-26 14:38:57] docker compose version: Docker Compose version v5.0.2
-[2026-03-26 14:38:57] kurtosis already installed: CLI Version:   1.15.2
+[2026-03-26 14:42:37] node already installed: v20.19.5
+[2026-03-26 14:42:37] go already installed: go version go1.24.6 (Red Hat 1.24.6-1.el9_6) linux/amd64
+[2026-03-26 14:42:37] docker already installed: Docker version 29.2.1, build a5c7197
+[2026-03-26 14:42:37] docker version: Docker version 29.2.1, build a5c7197
+[2026-03-26 14:42:37] docker compose version: Docker Compose version v5.0.2
+[2026-03-26 14:42:37] kurtosis already installed: CLI Version:   1.15.2
 
 To see the engine version (provided it is running): kurtosis engine status
-[2026-03-26 14:38:57] Verifying required tools
+[2026-03-26 14:42:37] Verifying required tools
 git version 2.47.3
 curl 7.76.1 (x86_64-redhat-linux-gnu) libcurl/7.76.1 OpenSSL/3.5.1 zlib/1.2.11 brotli/1.0.9 libidn2/2.3.0 libpsl/0.21.1 (+libidn2/2.3.0) libssh/0.10.4/openssl/zlib nghttp2/1.43.0
 rsync  version 3.2.5  protocol version 31
@@ -53,18 +52,18 @@ CLI Version:   1.15.2
 To see the engine version (provided it is running): kurtosis engine status
 v16.20.2
 8.19.4
-[2026-03-26 14:38:57] Tool verification completed
-[2026-03-26 14:38:57] Checking repository at /home/narwhal/eth_overlay
-[2026-03-26 14:38:57] Repository exists, refreshing from origin/main
+[2026-03-26 14:42:37] Tool verification completed
+[2026-03-26 14:42:37] Checking repository at /home/narwhal/eth_overlay
+[2026-03-26 14:42:37] Repository exists, refreshing from origin/main
 From https://github.com/santosha135/eth_overlay
-   c4684af..59e4755  main       -> origin/main
-HEAD is now at 59e4755 changes attack testbed
+   59e4755..71f32ad  main       -> origin/main
+HEAD is now at 71f32ad changes attack testbed
 Removing ethereum-package/geth_proc_usage.log
-[2026-03-26 14:38:58] Repository ready
+[2026-03-26 14:42:38] Repository ready
 main
-59e47558948051b47813b284f3ec1c27a267743a
-[2026-03-26 14:38:58] STEP 2: copy built geth binary
-[2026-03-26 14:38:58] STEP 3: build docker image
+71f32ad8245372cedaf24526f67b93252d042593
+[2026-03-26 14:42:38] STEP 2: copy built geth binary
+[2026-03-26 14:42:38] STEP 3: build docker image
 #0 building with "default" instance using docker driver
 
 #1 [internal] load build definition from Dockerfile
@@ -72,7 +71,7 @@ main
 #1 DONE 0.0s
 
 #2 [internal] load metadata for docker.io/library/debian:trixie-slim
-#2 DONE 0.5s
+#2 DONE 0.3s
 
 #3 [internal] load .dockerignore
 #3 transferring context: 2B done
@@ -102,32 +101,32 @@ main
 #10 exporting layers done
 #10 exporting manifest sha256:00c426c140ba93a7054752919b24911af620a7f63a60b3af3aa607b2f86edf1e done
 #10 exporting config sha256:24033bcc13f375e652b7b712b1aca5f5dc14ae3517009a61c27e5f0ccb79879b done
-#10 exporting attestation manifest sha256:87e66096174a1b9c85c5b567d6c4f59ec79472feddbf486db1879f3005c99961 0.0s done
-#10 exporting manifest list sha256:cf81ad386d38ada8ae4896f60bceff99b4660ce48885e11d1e67c5befe86b977 0.0s done
+#10 exporting attestation manifest sha256:06e4ce633e4b88a095afc2ef163cbee1b31f6a3538a9942bb88c4fa1cbd64844 0.0s done
+#10 exporting manifest list sha256:a6fcf07666083695611770f77db5d2d20255be94bb760654475e08035ba34067 0.0s done
 #10 naming to docker.io/library/geth-overlay:local done
 #10 unpacking to docker.io/library/geth-overlay:local done
 #10 DONE 0.1s
-[2026-03-26 14:38:59] STEP 4: run kurtosis
-[36mINFO[0m[2026-03-26T14:38:59-06:00] Cleaning enclaves...                         
-faac5a441c4e4d38a941a8ce247defd5	local-eth-testnet
-[36mINFO[0m[2026-03-26T14:39:02-06:00] Successfully removed the following enclaves: 
-[36mINFO[0m[2026-03-26T14:39:02-06:00] Successfully cleaned enclaves                
-[36mINFO[0m[2026-03-26T14:39:02-06:00] Cleaning unused images...                    
-[36mINFO[0m[2026-03-26T14:39:02-06:00] Successfully cleaned unused images           
-[36mINFO[0m[2026-03-26T14:39:02-06:00] Cleaning old Kurtosis engine containers...   
-[36mINFO[0m[2026-03-26T14:39:02-06:00] Successfully cleaned old Kurtosis engine containers 
-[36mINFO[0m[2026-03-26T14:39:02-06:00] Creating a new enclave for Starlark to run inside... 
-[36mINFO[0m[2026-03-26T14:39:03-06:00] Enclave 'local-eth-testnet' created successfully 
-[36mINFO[0m[2026-03-26T14:39:03-06:00] Executing Starlark package at '/home/narwhal/eth_overlay/ethereum-package' as the passed argument '.' looks like a directory 
-[36mINFO[0m[2026-03-26T14:39:03-06:00] Compressing package 'github.com/ethpandaops/ethereum-package' at '.' for upload 
-[36mINFO[0m[2026-03-26T14:39:04-06:00] Uploading and executing package 'github.com/ethpandaops/ethereum-package' 
-[36mINFO[0m[2026-03-26T14:39:05-06:00] Kurtosis CLI is running in a non interactive terminal. Everything will work but progress information and the progress bar will not be displayed. 
+[2026-03-26 14:42:38] STEP 4: run kurtosis
+[36mINFO[0m[2026-03-26T14:42:38-06:00] Cleaning old Kurtosis engine containers...   
+[36mINFO[0m[2026-03-26T14:42:38-06:00] Successfully cleaned old Kurtosis engine containers 
+[36mINFO[0m[2026-03-26T14:42:38-06:00] Cleaning enclaves...                         
+ade557fe989e4301ae3d101cc6432aa8	local-eth-testnet
+[36mINFO[0m[2026-03-26T14:42:41-06:00] Successfully removed the following enclaves: 
+[36mINFO[0m[2026-03-26T14:42:41-06:00] Successfully cleaned enclaves                
+[36mINFO[0m[2026-03-26T14:42:41-06:00] Cleaning unused images...                    
+[36mINFO[0m[2026-03-26T14:42:41-06:00] Successfully cleaned unused images           
+[36mINFO[0m[2026-03-26T14:42:41-06:00] Creating a new enclave for Starlark to run inside... 
+[36mINFO[0m[2026-03-26T14:42:43-06:00] Enclave 'local-eth-testnet' created successfully 
+[36mINFO[0m[2026-03-26T14:42:43-06:00] Executing Starlark package at '/home/narwhal/eth_overlay/ethereum-package' as the passed argument '.' looks like a directory 
+[36mINFO[0m[2026-03-26T14:42:43-06:00] Compressing package 'github.com/ethpandaops/ethereum-package' at '.' for upload 
+[36mINFO[0m[2026-03-26T14:42:45-06:00] Uploading and executing package 'github.com/ethpandaops/ethereum-package' 
+[36mINFO[0m[2026-03-26T14:42:45-06:00] Kurtosis CLI is running in a non interactive terminal. Everything will work but progress information and the progress bar will not be displayed. 
 
 Container images used in this run:
-> ethpandaops/ethereum-genesis-generator:5.2.4 - locally cached
-> badouralix/curl-jq - locally cached
 > sigp/lighthouse:latest - locally cached
 > geth-overlay:local - locally cached
+> badouralix/curl-jq - locally cached
+> ethpandaops/ethereum-genesis-generator:5.2.4 - locally cached
 > protolambda/eth2-val-tools:latest - locally cached
 
 Printing a message
@@ -140,10 +139,10 @@ Fetching cluster type 'docker'
 Fetched cluster type 'docker'
 
 Uploading file '/static_files/jwt/jwtsecret' to files artifact 'jwt_file'
-Files with artifact name 'jwt_file' uploaded with artifact UUID 'c47e2bd56f174b8ead79348237755896'
+Files with artifact name 'jwt_file' uploaded with artifact UUID 'c80cc034912740be957a6432167a9252'
 
 Uploading file '/static_files/keymanager/keymanager.txt' to files artifact 'keymanager_file'
-Files with artifact name 'keymanager_file' uploaded with artifact UUID '00f876df08ac45c1babe144a660f5df6'
+Files with artifact name 'keymanager_file' uploaded with artifact UUID '029e23b9b9864aea8ba74b42ebb51cc6'
 
 Printing a message
 Read the prometheus, grafana templates
@@ -155,7 +154,7 @@ Printing a message
 Generating cl validator key stores
 
 Adding service with name 'validator-key-generation-cl-validator-keystore' and image 'protolambda/eth2-val-tools:latest'
-Service 'validator-key-generation-cl-validator-keystore' added with service UUID '9b5685ce4671437ea8fe58722089ac2e'
+Service 'validator-key-generation-cl-validator-keystore' added with service UUID 'a5f5d62a47f34ad190634fc6f3113b99'
 
 Generating keystores
 Command returned with exit code '0' with no output
@@ -164,7 +163,7 @@ Verifying whether two values meet a certain condition '=='
 Verification succeeded. Value is '0'.
 
 Storing files from service 'validator-key-generation-cl-validator-keystore' at path '/node-0-keystores/' to files artifact with name '1-lighthouse-geth-0-127'
-Files with artifact name '1-lighthouse-geth-0-127' uploaded with artifact UUID '4601deb491e2420985773eb0adf633ca'
+Files with artifact name '1-lighthouse-geth-0-127' uploaded with artifact UUID 'b76ce4cd438a4650a961235d6da2f65c'
 
 Storing prysm password in a file
 Command returned with exit code '0' with no output
@@ -173,7 +172,7 @@ Verifying whether two values meet a certain condition '=='
 Verification succeeded. Value is '0'.
 
 Storing files from service 'validator-key-generation-cl-validator-keystore' at path '/tmp/prysm-password.txt' to files artifact with name 'prysm-password'
-Files with artifact name 'prysm-password' uploaded with artifact UUID 'a840d0b44f6245bebdcd0ece94e7cd26'
+Files with artifact name 'prysm-password' uploaded with artifact UUID '80dcfddb60b0405b8e5783d27a01920c'
 
 Printing a message
 {
@@ -194,13 +193,13 @@ Printing a message
 }
 
 Getting final genesis timestamp
-Command returned with exit code '0' and the following output: 1774557579
+Command returned with exit code '0' and the following output: 1774557800
 
 Printing a message
 Generating EL CL data
 
 Rendering a template to a files artifact with name 'genesis-el-cl-env-file'
-Templates artifact name 'genesis-el-cl-env-file' rendered with artifact UUID '5c4880d886ef4a378c0da9f9039eccce'
+Templates artifact name 'genesis-el-cl-env-file' rendered with artifact UUID 'ecd66aaf455e4423b2da32ffa8e63ae7'
 
 Creating genesis
 Command returned with exit code '0' and the following output:
@@ -258,17 +257,17 @@ Adding additional contracts...
 Applying allocations to genesis files...
 + '[' -f /data/metadata/genesis.ssz ']'
 ++ mktemp -d -t ci-XXXXXXXXXX
-+ tmp_dir=/tmp/ci-ZRLiL45sbB
++ tmp_dir=/tmp/ci-vKBDK5gyAQ
 + mkdir -p /data/metadata
 + mkdir -p /data/parsed
-++ date -u -d @1774557579 '+%Y-%b-%d %I:%M:%S %p %Z'
-+ HUMAN_READABLE_TIMESTAMP='2026-Mar-26 08:39:39 PM UTC'
-+ COMMENT='# 2026-Mar-26 08:39:39 PM UTC'
+++ date -u -d @1774557800 '+%Y-%b-%d %I:%M:%S %p %Z'
++ HUMAN_READABLE_TIMESTAMP='2026-Mar-26 08:43:20 PM UTC'
++ COMMENT='# 2026-Mar-26 08:43:20 PM UTC'
 + export MAX_REQUEST_BLOB_SIDECARS_ELECTRA=1152
 + MAX_REQUEST_BLOB_SIDECARS_ELECTRA=1152
 + cat /config/cl/config.yaml
 + sed '/^BLOB_SCHEDULE:/,/^[a-zA-Z]/ d'
-+ sed 's/#HUMAN_TIME_PLACEHOLDER/# 2026-Mar-26 08:39:39 PM UTC/'
++ sed 's/#HUMAN_TIME_PLACEHOLDER/# 2026-Mar-26 08:43:20 PM UTC/'
 + envsubst
 + add_blob_schedule /data/metadata/config.yaml
 + local config_file=/data/metadata/config.yaml
@@ -326,7 +325,7 @@ BLOB_SCHEDULE:
 + '[' -n '[]' ']'
 + '[' '[]' '!=' '[]' ']'
 + [[ mainnet == \m\i\n\i\m\a\l ]]
-+ cp /tmp/ci-ZRLiL45sbB/mnemonics.yaml /data/metadata/mnemonics.yaml
++ cp /tmp/ci-vKBDK5gyAQ/mnemonics.yaml /data/metadata/mnemonics.yaml
 + grep DEPOSIT_CONTRACT_ADDRESS /data/metadata/config.yaml
 + cut -d ' ' -f2
 + echo 0
@@ -335,29 +334,29 @@ BLOB_SCHEDULE:
 + [[ '' != '' ]]
 + [[ '' != '' ]]
 + '[' -z '' ']'
-+ /usr/local/bin/eth-genesis-state-generator beaconchain --config /data/metadata/config.yaml --eth1-config /data/metadata/genesis.json --mnemonics /tmp/ci-ZRLiL45sbB/mnemonics.yaml --state-output /data/metadata/genesis.ssz --json-output /data/parsed/parsedConsensusGenesis.json
-time="2026-03-26T20:39:11Z" level=info msg="eth-beacon-genesis version: git-201b86f"
-time="2026-03-26T20:39:11Z" level=info msg="loaded execution genesis. chainid: 3151908"
-time="2026-03-26T20:39:11Z" level=info msg="loaded consensus config. genesis fork version: 0x10000038"
-time="2026-03-26T20:39:11Z" level=info msg="processing mnemonic 0, for 128 validators"
-time="2026-03-26T20:39:11Z" level=info msg="...validator 100/128"
-time="2026-03-26T20:39:11Z" level=info msg="loaded 128 validators. total balance: 4096 ETH"
-time="2026-03-26T20:39:11Z" level=info msg="genesis version: fulu"
-time="2026-03-26T20:39:11Z" level=info msg="genesis time: 1774557579"
-time="2026-03-26T20:39:11Z" level=info msg="genesis validators root: 0xd1ec305b97bf6336571c2348e4a8bf173684b0cdb7e55f7e6554d51f8478b5a3"
-time="2026-03-26T20:39:11Z" level=info msg="successfully built genesis state."
-time="2026-03-26T20:39:11Z" level=info msg="serialized genesis state to SSZ file: /data/metadata/genesis.ssz"
++ /usr/local/bin/eth-genesis-state-generator beaconchain --config /data/metadata/config.yaml --eth1-config /data/metadata/genesis.json --mnemonics /tmp/ci-vKBDK5gyAQ/mnemonics.yaml --state-output /data/metadata/genesis.ssz --json-output /data/parsed/parsedConsensusGenesis.json
+time="2026-03-26T20:42:51Z" level=info msg="eth-beacon-genesis version: git-201b86f"
+time="2026-03-26T20:42:51Z" level=info msg="loaded execution genesis. chainid: 3151908"
+time="2026-03-26T20:42:51Z" level=info msg="loaded consensus config. genesis fork version: 0x10000038"
+time="2026-03-26T20:42:51Z" level=info msg="processing mnemonic 0, for 128 validators"
+time="2026-03-26T20:42:51Z" level=info msg="...validator 100/128"
+time="2026-03-26T20:42:51Z" level=info msg="loaded 128 validators. total balance: 4096 ETH"
+time="2026-03-26T20:42:51Z" level=info msg="genesis version: fulu"
+time="2026-03-26T20:42:51Z" level=info msg="genesis time: 1774557800"
+time="2026-03-26T20:42:51Z" level=info msg="genesis validators root: 0xd1ec305b97bf6336571c2348e4a8bf173684b0cdb7e55f7e6554d51f8478b5a3"
+time="2026-03-26T20:42:51Z" level=info msg="successfully built genesis state."
+time="2026-03-26T20:42:51Z" level=info msg="serialized genesis state to SSZ file: /data/metadata/genesis.ssz"
 serialized genesis state to JSON file: /data/parsed/parsedConsensusGenesis.json
-+ echo 'Genesis args: beaconchain' --config /data/metadata/config.yaml --eth1-config /data/metadata/genesis.json --mnemonics /tmp/ci-ZRLiL45sbB/mnemonics.yaml --state-output /data/metadata/genesis.ssz --json-output /data/parsed/parsedConsensusGenesis.json
-Genesis args: beaconchain --config /data/metadata/config.yaml --eth1-config /data/metadata/genesis.json --mnemonics /tmp/ci-ZRLiL45sbB/mnemonics.yaml --state-output /data/metadata/genesis.ssz --json-output /data/parsed/parsedConsensusGenesis.json
++ echo 'Genesis args: beaconchain' --config /data/metadata/config.yaml --eth1-config /data/metadata/genesis.json --mnemonics /tmp/ci-vKBDK5gyAQ/mnemonics.yaml --state-output /data/metadata/genesis.ssz --json-output /data/parsed/parsedConsensusGenesis.json
+Genesis args: beaconchain --config /data/metadata/config.yaml --eth1-config /data/metadata/genesis.json --mnemonics /tmp/ci-vKBDK5gyAQ/mnemonics.yaml --state-output /data/metadata/genesis.ssz --json-output /data/parsed/parsedConsensusGenesis.json
 ++ jq -r .latest_execution_payload_header.block_number /data/parsed/parsedConsensusGenesis.json
 Genesis block number: 0
 + echo 'Genesis block number: 0'
 ++ jq -r .latest_execution_payload_header.block_hash /data/parsed/parsedConsensusGenesis.json
-Genesis block hash: 0x73bdd161609a34a1ae380d45800df8610a60c2dc76ab555b3ee30d0f4c6e5ec4
-+ echo 'Genesis block hash: 0x73bdd161609a34a1ae380d45800df8610a60c2dc76ab555b3ee30d0f4c6e5ec4'
-+ tr -d '\n'
++ echo 'Genesis block hash: 0xcbb54dc21f04b5cd94042267d9858d304401e2b45ecf3fddd2c654172f663388'
+Genesis block hash: 0xcbb54dc21f04b5cd94042267d9858d304401e2b45ecf3fddd2c654172f663388
 + jq -r .eth1_data.block_hash /data/parsed/parsedConsensusGenesis.json
++ tr -d '\n'
 + jq -r .genesis_validators_root /data/parsed/parsedConsensusGenesis.json
 + tr -d '\n'
 + gen_shared_files
@@ -367,7 +366,7 @@ Genesis block hash: 0x73bdd161609a34a1ae380d45800df8610a60c2dc76ab555b3ee30d0f4c
 + mkdir -p /data/jwt
 ++ openssl rand -hex 32
 ++ tr -d '\n'
-+ echo -n 0xdd455cddc1a9601e6d860f88022e6e3004e2b55571c465f4f81f70f4f65ad574
++ echo -n 0x579febd688b9cb64976d009b1009b01a41462ebb8b15faa6097962ee01eaac5a
 + '[' -f /data/metadata/genesis.json ']'
 ++ cat /data/metadata/genesis.json
 ++ jq -r '.config.terminalTotalDifficulty | tostring'
@@ -384,13 +383,13 @@ Reading osaka time from genesis
 Command returned with exit code '0' and the following output: 0
 
 Adding service with name 'el-1-geth-lighthouse' and image 'geth-overlay:local'
-Service 'el-1-geth-lighthouse' added with service UUID '43f590a620e34f45b89619001c61fa4c'
+Service 'el-1-geth-lighthouse' added with service UUID '32309242963b4ec2aff86900aa7063aa'
 
 Waiting for at most '30m0s' for service 'el-1-geth-lighthouse' to reach a certain state
-Wait took 1 tries (13.160233ms in total). Assertion passed with following:
-Request had response code '200' and body "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"id\":\"3fd44fbd94965fe6f3aa358f31a12b431b2a9ade414b896f8afcc2b8fc34d9aa\",\"name\":\"Geth/v1.17.0-unstable-c9b7ae42-20260209/linux-amd64/go1.25.5 (Red Hat 1.25.5-2.el9_7)\",\"enode\":\"enode://76771aa8b74b9d0bde5398e11f369d579564e83e0bdcc4747f94fe6e25e1bdd7414283ff6cefb7c3b9b98740706350359bc212e50295f0e8d655c08b3306352c@172.16.0.10:30303\",\"enr\":\"enr:-KO4QEzyIeqWqw61e-ao1rlkZ2GR_WCSUrJRj5n-M12Cltv6RIVKjsPAfgtAaDRZqtV4prl0WLM0jLXAGliOty2gUVaGAZ0r32YVg2V0aMfGhISpwWqAgmlkgnY0gmlwhKwQAAqJc2VjcDI1NmsxoQJ2dxqot0udC95TmOEfNp1XlWToPgvcxHR_lP5uJeG914RzbmFwwIN0Y3CCdl-DdWRwgnZf\",\"ip\":\"172.16.0.10\",\"ports\":{\"discovery\":30303,\"listener\":30303},\"listenAddr\":\"[::]:30303\",\"protocols\":{\"eth\":{\"network\":3151908,\"genesis\":\"0x73bdd161609a34a1ae380d45800df8610a60c2dc76ab555b3ee30d0f4c6e5ec4\",\"config\":{\"chainId\":3151908,\"homesteadBlock\":0,\"eip150Block\":0,\"eip155Block\":0,\"eip158Block\":0,\"byzantiumBlock\":0,\"constantinopleBlock\":0,\"petersburgBlock\":0,\"istanbulBlock\":0,\"berlinBlock\":0,\"londonBlock\":0,\"mergeNetsplitBlock\":0,\"shanghaiTime\":0,\"cancunTime\":0,\"pragueTime\":0,\"osakaTime\":0,\"bpo1Time\":0,\"terminalTotalDifficulty\":0,\"depositContractAddress\":\"0x00000000219ab540356cbb839cbe05303d7705fa\",\"blobSchedule\":{\"cancun\":{\"target\":3,\"max\":6,\"baseFeeUpdateFraction\":3338477},\"prague\":{\"target\":6,\"max\":9,\"baseFeeUpdateFraction\":5007716},\"osaka\":{\"target\":6,\"max\":9,\"baseFeeUpdateFraction\":5007716},\"bpo1\":{\"target\":10,\"max\":15,\"baseFeeUpdateFraction\":8346193}}},\"head\":\"0x73bdd161609a34a1ae380d45800df8610a60c2dc76ab555b3ee30d0f4c6e5ec4\"},\"snap\":{}}}}\n", with extracted fields:
-'extract.enr': "enr:-KO4QEzyIeqWqw61e-ao1rlkZ2GR_WCSUrJRj5n-M12Cltv6RIVKjsPAfgtAaDRZqtV4prl0WLM0jLXAGliOty2gUVaGAZ0r32YVg2V0aMfGhISpwWqAgmlkgnY0gmlwhKwQAAqJc2VjcDI1NmsxoQJ2dxqot0udC95TmOEfNp1XlWToPgvcxHR_lP5uJeG914RzbmFwwIN0Y3CCdl-DdWRwgnZf"
-'extract.enode': "enode://76771aa8b74b9d0bde5398e11f369d579564e83e0bdcc4747f94fe6e25e1bdd7414283ff6cefb7c3b9b98740706350359bc212e50295f0e8d655c08b3306352c@172.16.0.10:30303"
+Wait took 1 tries (13.049222ms in total). Assertion passed with following:
+Request had response code '200' and body "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"id\":\"000453d70e746f7feaaa83f410d0b6b56a4a2cecb1e1442940e30796dec7b2b8\",\"name\":\"Geth/v1.17.0-unstable-c9b7ae42-20260209/linux-amd64/go1.25.5 (Red Hat 1.25.5-2.el9_7)\",\"enode\":\"enode://12542b291565ab2001e82c79527c4fd47ee1ff5fdadd0e4d449b020785627620f6d416ff1fab97d29e832a9f119a1da95f68285f8e3dfbd2abb1692deacaf270@172.16.0.10:30303\",\"enr\":\"enr:-KO4QGC2y8VZHgBHumw-p57Z9r2myBHKw97AcLLq_sVscRp5Ge3oEZG0wkanZznh3hcKu-5Q8-5_WqYAE41LlviEpUiGAZ0r4sNIg2V0aMfGhF7brSaAgmlkgnY0gmlwhKwQAAqJc2VjcDI1NmsxoQISVCspFWWrIAHoLHlSfE_UfuH_X9rdDk1EmwIHhWJ2IIRzbmFwwIN0Y3CCdl-DdWRwgnZf\",\"ip\":\"172.16.0.10\",\"ports\":{\"discovery\":30303,\"listener\":30303},\"listenAddr\":\"[::]:30303\",\"protocols\":{\"eth\":{\"network\":3151908,\"genesis\":\"0xcbb54dc21f04b5cd94042267d9858d304401e2b45ecf3fddd2c654172f663388\",\"config\":{\"chainId\":3151908,\"homesteadBlock\":0,\"eip150Block\":0,\"eip155Block\":0,\"eip158Block\":0,\"byzantiumBlock\":0,\"constantinopleBlock\":0,\"petersburgBlock\":0,\"istanbulBlock\":0,\"berlinBlock\":0,\"londonBlock\":0,\"mergeNetsplitBlock\":0,\"shanghaiTime\":0,\"cancunTime\":0,\"pragueTime\":0,\"osakaTime\":0,\"bpo1Time\":0,\"terminalTotalDifficulty\":0,\"depositContractAddress\":\"0x00000000219ab540356cbb839cbe05303d7705fa\",\"blobSchedule\":{\"cancun\":{\"target\":3,\"max\":6,\"baseFeeUpdateFraction\":3338477},\"prague\":{\"target\":6,\"max\":9,\"baseFeeUpdateFraction\":5007716},\"osaka\":{\"target\":6,\"max\":9,\"baseFeeUpdateFraction\":5007716},\"bpo1\":{\"target\":10,\"max\":15,\"baseFeeUpdateFraction\":8346193}}},\"head\":\"0xcbb54dc21f04b5cd94042267d9858d304401e2b45ecf3fddd2c654172f663388\"},\"snap\":{}}}}\n", with extracted fields:
+'extract.enode': "enode://12542b291565ab2001e82c79527c4fd47ee1ff5fdadd0e4d449b020785627620f6d416ff1fab97d29e832a9f119a1da95f68285f8e3dfbd2abb1692deacaf270@172.16.0.10:30303"
+'extract.enr': "enr:-KO4QGC2y8VZHgBHumw-p57Z9r2myBHKw97AcLLq_sVscRp5Ge3oEZG0wkanZznh3hcKu-5Q8-5_WqYAE41LlviEpUiGAZ0r4sNIg2V0aMfGhF7brSaAgmlkgnY0gmlwhKwQAAqJc2VjcDI1NmsxoQISVCspFWWrIAHoLHlSfE_UfuH_X9rdDk1EmwIHhWJ2IIRzbmFwwIN0Y3CCdl-DdWRwgnZf"
 
 Printing a message
 Successfully added 1 EL participants
@@ -399,13 +398,13 @@ Printing a message
 Launching CL network
 
 Adding service with name 'cl-1-lighthouse-geth' and image 'sigp/lighthouse:latest'
-Service 'cl-1-lighthouse-geth' added with service UUID '1280ea281a89448d8fdce628cc53f40b'
+Service 'cl-1-lighthouse-geth' added with service UUID 'cd2fc57fd52e47a6b4e141ea7d3c329f'
 
 Running 'GET' request on service 'cl-1-lighthouse-geth'
-Request had response code '200' and body "{\"data\":{\"peer_id\":\"16Uiu2HAmUX9nF4h33T8uRSrcwxuD26WiTcXQpJMTgsEuzUEDiQcu\",\"enr\":\"enr:-Ou4QA9atp8yT-GL97_NcCLCm62zFyw8HZEADT54a0Ln_kETBrP8wOff3WJDcYBprzPV_7U3bb0nUMnyDDm80b9iUYoDh2F0dG5ldHOIAAAAAAAADACDY2djBIZjbGllbnTRikxpZ2h0aG91c2WFOC4wLjGEZXRoMpClGtmXcAAAOP__________gmlkgnY0gmlwhKwQAAuDbmZkhKUa2ZeEcXVpY4IjKYlzZWNwMjU2azGhA-u5AdRLDNjU8alsX15hHxjo2po9kHsoPWtS2qTjHAHmiHN5bmNuZXRzAIN0Y3CCIyiDdWRwgiMo\",\"p2p_addresses\":[\"/ip4/172.16.0.11/tcp/9000/p2p/16Uiu2HAmUX9nF4h33T8uRSrcwxuD26WiTcXQpJMTgsEuzUEDiQcu\"],\"discovery_addresses\":[\"/ip4/172.16.0.11/udp/9000/p2p/16Uiu2HAmUX9nF4h33T8uRSrcwxuD26WiTcXQpJMTgsEuzUEDiQcu\"],\"metadata\":{\"seq_number\":\"2\",\"attnets\":\"0x0000000000000c00\",\"syncnets\":\"0x00\",\"custody_group_count\":\"4\"}}}", with extracted fields:
-'extract.peer_id': "16Uiu2HAmUX9nF4h33T8uRSrcwxuD26WiTcXQpJMTgsEuzUEDiQcu"
-'extract.enr': "enr:-Ou4QA9atp8yT-GL97_NcCLCm62zFyw8HZEADT54a0Ln_kETBrP8wOff3WJDcYBprzPV_7U3bb0nUMnyDDm80b9iUYoDh2F0dG5ldHOIAAAAAAAADACDY2djBIZjbGllbnTRikxpZ2h0aG91c2WFOC4wLjGEZXRoMpClGtmXcAAAOP__________gmlkgnY0gmlwhKwQAAuDbmZkhKUa2ZeEcXVpY4IjKYlzZWNwMjU2azGhA-u5AdRLDNjU8alsX15hHxjo2po9kHsoPWtS2qTjHAHmiHN5bmNuZXRzAIN0Y3CCIyiDdWRwgiMo"
-'extract.multiaddr': "/ip4/172.16.0.11/tcp/9000/p2p/16Uiu2HAmUX9nF4h33T8uRSrcwxuD26WiTcXQpJMTgsEuzUEDiQcu"
+Request had response code '200' and body "{\"data\":{\"peer_id\":\"16Uiu2HAm4GdKDYKEsDJbi9zRf1QvddiYw5raLNk9udP82gMUaZQR\",\"enr\":\"enr:-Ou4QDLLNqZ0qSlhN3ggu-Nxf3RzxhWGMS4kG2kSLsyx25aLR6zc82KtTzG9Hq-KTSyvGCjPPZRpD1D-wgo8sFCg52wDh2F0dG5ldHOIAAAwAAAAAACDY2djBIZjbGllbnTRikxpZ2h0aG91c2WFOC4wLjGEZXRoMpClGtmXcAAAOP__________gmlkgnY0gmlwhKwQAAuDbmZkhKUa2ZeEcXVpY4IjKYlzZWNwMjU2azGhAoNn8QzxtsAWe6_fWDAvS6lv0eGtgx5VlgAsfi6dRwtmiHN5bmNuZXRzAIN0Y3CCIyiDdWRwgiMo\",\"p2p_addresses\":[\"/ip4/172.16.0.11/tcp/9000/p2p/16Uiu2HAm4GdKDYKEsDJbi9zRf1QvddiYw5raLNk9udP82gMUaZQR\"],\"discovery_addresses\":[\"/ip4/172.16.0.11/udp/9000/p2p/16Uiu2HAm4GdKDYKEsDJbi9zRf1QvddiYw5raLNk9udP82gMUaZQR\"],\"metadata\":{\"seq_number\":\"2\",\"attnets\":\"0x0000300000000000\",\"syncnets\":\"0x00\",\"custody_group_count\":\"4\"}}}", with extracted fields:
+'extract.peer_id': "16Uiu2HAm4GdKDYKEsDJbi9zRf1QvddiYw5raLNk9udP82gMUaZQR"
+'extract.enr': "enr:-Ou4QDLLNqZ0qSlhN3ggu-Nxf3RzxhWGMS4kG2kSLsyx25aLR6zc82KtTzG9Hq-KTSyvGCjPPZRpD1D-wgo8sFCg52wDh2F0dG5ldHOIAAAwAAAAAACDY2djBIZjbGllbnTRikxpZ2h0aG91c2WFOC4wLjGEZXRoMpClGtmXcAAAOP__________gmlkgnY0gmlwhKwQAAuDbmZkhKUa2ZeEcXVpY4IjKYlzZWNwMjU2azGhAoNn8QzxtsAWe6_fWDAvS6lv0eGtgx5VlgAsfi6dRwtmiHN5bmNuZXRzAIN0Y3CCIyiDdWRwgiMo"
+'extract.multiaddr': "/ip4/172.16.0.11/tcp/9000/p2p/16Uiu2HAm4GdKDYKEsDJbi9zRf1QvddiYw5raLNk9udP82gMUaZQR"
 
 Printing a message
 Successfully added 1 CL participants
@@ -418,13 +417,13 @@ Using separate validator client for participant #1
 
 Adding '1' services with names 'vc-1-geth-lighthouse'
 Successfully added the following '1' services:
-  Service 'vc-1-geth-lighthouse' added with UUID '3c27fc4062e0485eaa27a80c6bc24a27'
+  Service 'vc-1-geth-lighthouse' added with UUID 'd67bb330795d4bcfa7a4397d3329a45c'
 
 Printing a message
 NODE JSON RPC URI: 'el-1-geth-lighthouse:8545'
 
 Rendering a template to a files artifact with name 'validator-ranges'
-Templates artifact name 'validator-ranges' rendered with artifact UUID '2832648904fa4cb285e878389c6a4d10'
+Templates artifact name 'validator-ranges' rendered with artifact UUID 'e32850fee2da4c15ad74c5a4ffffd504'
 
 Starlark code successfully run. Output was:
 {
@@ -446,12 +445,12 @@ Starlark code successfully run. Output was:
 					}
 				],
 				"client_name": "lighthouse",
-				"enr": "enr:-Ou4QA9atp8yT-GL97_NcCLCm62zFyw8HZEADT54a0Ln_kETBrP8wOff3WJDcYBprzPV_7U3bb0nUMnyDDm80b9iUYoDh2F0dG5ldHOIAAAAAAAADACDY2djBIZjbGllbnTRikxpZ2h0aG91c2WFOC4wLjGEZXRoMpClGtmXcAAAOP__________gmlkgnY0gmlwhKwQAAuDbmZkhKUa2ZeEcXVpY4IjKYlzZWNwMjU2azGhA-u5AdRLDNjU8alsX15hHxjo2po9kHsoPWtS2qTjHAHmiHN5bmNuZXRzAIN0Y3CCIyiDdWRwgiMo",
+				"enr": "enr:-Ou4QDLLNqZ0qSlhN3ggu-Nxf3RzxhWGMS4kG2kSLsyx25aLR6zc82KtTzG9Hq-KTSyvGCjPPZRpD1D-wgo8sFCg52wDh2F0dG5ldHOIAAAwAAAAAACDY2djBIZjbGllbnTRikxpZ2h0aG91c2WFOC4wLjGEZXRoMpClGtmXcAAAOP__________gmlkgnY0gmlwhKwQAAuDbmZkhKUa2ZeEcXVpY4IjKYlzZWNwMjU2azGhAoNn8QzxtsAWe6_fWDAvS6lv0eGtgx5VlgAsfi6dRwtmiHN5bmNuZXRzAIN0Y3CCIyiDdWRwgiMo",
 				"http_port": 4000,
 				"ip_addr": "cl-1-lighthouse-geth",
 				"ip_address": "172.16.0.11",
-				"multiaddr": "/ip4/172.16.0.11/tcp/9000/p2p/16Uiu2HAmUX9nF4h33T8uRSrcwxuD26WiTcXQpJMTgsEuzUEDiQcu",
-				"peer_id": "16Uiu2HAmUX9nF4h33T8uRSrcwxuD26WiTcXQpJMTgsEuzUEDiQcu",
+				"multiaddr": "/ip4/172.16.0.11/tcp/9000/p2p/16Uiu2HAm4GdKDYKEsDJbi9zRf1QvddiYw5raLNk9udP82gMUaZQR",
+				"peer_id": "16Uiu2HAm4GdKDYKEsDJbi9zRf1QvddiYw5raLNk9udP82gMUaZQR",
 				"snooper_el_engine_context": null,
 				"snooper_enabled": false,
 				"supernode": false,
@@ -473,8 +472,8 @@ Starlark code successfully run. Output was:
 					}
 				],
 				"engine_rpc_port_num": 8551,
-				"enode": "enode://76771aa8b74b9d0bde5398e11f369d579564e83e0bdcc4747f94fe6e25e1bdd7414283ff6cefb7c3b9b98740706350359bc212e50295f0e8d655c08b3306352c@172.16.0.10:30303",
-				"enr": "enr:-KO4QEzyIeqWqw61e-ao1rlkZ2GR_WCSUrJRj5n-M12Cltv6RIVKjsPAfgtAaDRZqtV4prl0WLM0jLXAGliOty2gUVaGAZ0r32YVg2V0aMfGhISpwWqAgmlkgnY0gmlwhKwQAAqJc2VjcDI1NmsxoQJ2dxqot0udC95TmOEfNp1XlWToPgvcxHR_lP5uJeG914RzbmFwwIN0Y3CCdl-DdWRwgnZf",
+				"enode": "enode://12542b291565ab2001e82c79527c4fd47ee1ff5fdadd0e4d449b020785627620f6d416ff1fab97d29e832a9f119a1da95f68285f8e3dfbd2abb1692deacaf270@172.16.0.10:30303",
+				"enr": "enr:-KO4QGC2y8VZHgBHumw-p57Z9r2myBHKw97AcLLq_sVscRp5Ge3oEZG0wkanZznh3hcKu-5Q8-5_WqYAE41LlviEpUiGAZ0r4sNIg2V0aMfGhF7brSaAgmlkgnY0gmlwhKwQAAqJc2VjcDI1NmsxoQISVCspFWWrIAHoLHlSfE_UfuH_X9rdDk1EmwIHhWJ2IIRzbmFwwIN0Y3CCdl-DdWRwgnZf",
 				"ip_addr": "172.16.0.10",
 				"rpc_http_url": "http://el-1-geth-lighthouse:8545",
 				"rpc_port_num": 8545,
@@ -506,7 +505,7 @@ Starlark code successfully run. Output was:
 			"xatu_sentry_context": null
 		}
 	],
-	"final_genesis_timestamp": "1774557579",
+	"final_genesis_timestamp": "1774557800",
 	"genesis_validators_root": "0xd1ec305b97bf6336571c2348e4a8bf173684b0cdb7e55f7e6554d51f8478b5a3",
 	"network_id": "3151908",
 	"network_params": {
@@ -679,83 +678,162 @@ Starlark code successfully run. Output was:
 }
 
 ⭐ us on GitHub - https://github.com/kurtosis-tech/kurtosis
-[36mINFO[0m[2026-03-26T14:39:20-06:00] ========================================================== 
-[36mINFO[0m[2026-03-26T14:39:20-06:00] ||          Created enclave: local-eth-testnet          || 
-[36mINFO[0m[2026-03-26T14:39:20-06:00] ========================================================== 
+[36mINFO[0m[2026-03-26T14:43:00-06:00] ========================================================== 
+[36mINFO[0m[2026-03-26T14:43:00-06:00] ||          Created enclave: local-eth-testnet          || 
+[36mINFO[0m[2026-03-26T14:43:00-06:00] ========================================================== 
 Name:            local-eth-testnet
-UUID:            ade557fe989e
+UUID:            544c32f0b5a2
 Status:          RUNNING
-Creation Time:   Thu, 26 Mar 2026 14:39:02 MDT
+Creation Time:   Thu, 26 Mar 2026 14:42:41 MDT
 Flags:           
 
 ========================================= Files Artifacts =========================================
 UUID           Name
-4601deb491e2   1-lighthouse-geth-0-127
-9613b62f7d03   el_cl_genesis_data
-2198edc6f38b   final-genesis-timestamp
-5c4880d886ef   genesis-el-cl-env-file
-3bc30b85a63e   genesis_validators_root
-c47e2bd56f17   jwt_file
-00f876df08ac   keymanager_file
-a840d0b44f62   prysm-password
-2832648904fa   validator-ranges
+b76ce4cd438a   1-lighthouse-geth-0-127
+8058d40f2371   el_cl_genesis_data
+64aa4ba7a2f8   final-genesis-timestamp
+ecd66aaf455e   genesis-el-cl-env-file
+a74a23fa050b   genesis_validators_root
+c80cc0349127   jwt_file
+029e23b9b986   keymanager_file
+80dcfddb60b0   prysm-password
+e32850fee2da   validator-ranges
 
 ========================================== User Services ==========================================
 UUID           Name                                             Ports                                         Status
-1280ea281a89   cl-1-lighthouse-geth                             http: 4000/tcp -> http://127.0.0.1:32831      RUNNING
-                                                                metrics: 5054/tcp -> http://127.0.0.1:32832   
+cd2fc57fd52e   cl-1-lighthouse-geth                             http: 4000/tcp -> http://127.0.0.1:32841      RUNNING
+                                                                metrics: 5054/tcp -> http://127.0.0.1:32842   
                                                                 quic-discovery: 9001/udp                      
-                                                                tcp-discovery: 9000/tcp -> 127.0.0.1:32833    
+                                                                tcp-discovery: 9000/tcp -> 127.0.0.1:32843    
                                                                 udp-discovery: 9000/udp                       
-43f590a620e3   el-1-geth-lighthouse                             engine-rpc: 8551/tcp -> 127.0.0.1:32828       RUNNING
-                                                                metrics: 9001/tcp -> http://127.0.0.1:32829   
-                                                                rpc: 8545/tcp -> 127.0.0.1:32826              
-                                                                tcp-discovery: 30303/tcp -> 127.0.0.1:32830   
+32309242963b   el-1-geth-lighthouse                             engine-rpc: 8551/tcp -> 127.0.0.1:32838       RUNNING
+                                                                metrics: 9001/tcp -> http://127.0.0.1:32839   
+                                                                rpc: 8545/tcp -> 127.0.0.1:32836              
+                                                                tcp-discovery: 30303/tcp -> 127.0.0.1:32840   
                                                                 udp-discovery: 30303/udp                      
-                                                                ws: 8546/tcp -> 127.0.0.1:32827               
-9b5685ce4671   validator-key-generation-cl-validator-keystore   <none>                                        RUNNING
-3c27fc4062e0   vc-1-geth-lighthouse                             metrics: 8080/tcp -> http://127.0.0.1:32834   RUNNING
+                                                                ws: 8546/tcp -> 127.0.0.1:32837               
+a5f5d62a47f3   validator-key-generation-cl-validator-keystore   <none>                                        RUNNING
+d67bb330795d   vc-1-geth-lighthouse                             metrics: 8080/tcp -> http://127.0.0.1:32844   RUNNING
 
-[2026-03-26 14:39:20] STEP 5: start monitoring script
-[2026-03-26 14:39:20] STEP 6: install attack_testbed dependencies
-[2026-03-26 14:39:20] npm dependency web3 already installed
-[2026-03-26 14:39:20] STEP 7: run post process script
-===== kurtosis service ls output =====
-Manage services
+[2026-03-26 14:43:00] STEP 5: start monitoring script
+[2026-03-26 14:43:00] STEP 6: install attack_testbed dependencies
+[2026-03-26 14:43:01] npm dependency web3 already installed
+[2026-03-26 14:43:01] STEP 7: run post process script
+===== kurtosis enclave inspect local-eth-testnet =====
+Name:            local-eth-testnet
+UUID:            544c32f0b5a2
+Status:          RUNNING
+Creation Time:   Thu, 26 Mar 2026 14:42:41 MDT
+Flags:           
 
-Usage:
-  kurtosis service [command]
+========================================= Files Artifacts =========================================
+UUID           Name
+b76ce4cd438a   1-lighthouse-geth-0-127
+8058d40f2371   el_cl_genesis_data
+64aa4ba7a2f8   final-genesis-timestamp
+ecd66aaf455e   genesis-el-cl-env-file
+a74a23fa050b   genesis_validators_root
+c80cc0349127   jwt_file
+029e23b9b986   keymanager_file
+80dcfddb60b0   prysm-password
+e32850fee2da   validator-ranges
 
-Available Commands:
-  add         Adds a service to an enclave
-  exec        Executes a command in a service
-  inspect     Inspect a service
-  logs        Get service logs
-  rm          Removes a service from an enclave
-  shell       Gets a shell on a service
-  start       Restarts a stopped service
-  stop        Stops a service
-  update      Update a service
+========================================== User Services ==========================================
+UUID           Name                                             Ports                                         Status
+cd2fc57fd52e   cl-1-lighthouse-geth                             http: 4000/tcp -> http://127.0.0.1:32841      RUNNING
+                                                                metrics: 5054/tcp -> http://127.0.0.1:32842   
+                                                                quic-discovery: 9001/udp                      
+                                                                tcp-discovery: 9000/tcp -> 127.0.0.1:32843    
+                                                                udp-discovery: 9000/udp                       
+32309242963b   el-1-geth-lighthouse                             engine-rpc: 8551/tcp -> 127.0.0.1:32838       RUNNING
+                                                                metrics: 9001/tcp -> http://127.0.0.1:32839   
+                                                                rpc: 8545/tcp -> 127.0.0.1:32836              
+                                                                tcp-discovery: 30303/tcp -> 127.0.0.1:32840   
+                                                                udp-discovery: 30303/udp                      
+                                                                ws: 8546/tcp -> 127.0.0.1:32837               
+a5f5d62a47f3   validator-key-generation-cl-validator-keystore   <none>                                        RUNNING
+d67bb330795d   vc-1-geth-lighthouse                             metrics: 8080/tcp -> http://127.0.0.1:32844   RUNNING
 
-Flags:
-  -h, --help   help for service
 
-Global Flags:
-      --cli-log-level string   Sets the level that the CLI will log at (panic|fatal|error|warning|info|debug|trace) (default "info")
-      --debug-mode             Whether should enable Kurtosis in debug mode. The debug mode will use the Kurtosis container debug images version (only enabled for the engine server so far)
+===================================================
+Matched service : el-1-geth-lighthouse
+Detected RPC URL: http://127.0.0.1:32836
+Available accounts: []
+Base nonce: 0
+Chain ID       : 3151908
+From address   : 0x8943545177806ED17B9F23F0a21ee5948eCaa776
+To address     : 0x614561D2d143621E126e87831AEF287678B442b8
+From balance   : 1000000000 ETH
+To balance     : 1000000000 ETH
+To code        : 0x
+To is contract : false
 
-Use "kurtosis service [command] --help" for more information about a command.
+Sending transaction 1/5
+TX object: {
+  from: '0x8943545177806ED17B9F23F0a21ee5948eCaa776',
+  to: '0x614561D2d143621E126e87831AEF287678B442b8',
+  value: '100000000000000000',
+  gas: '21000',
+  gasPrice: '20000000000',
+  nonce: '0'
+}
+Transaction 1 failed before mining: Returned error: transaction indexing is in progress
 
-======================================
-file:///home/narwhal/eth_overlay/attack_testbed/post_process_script.mjs:59
-  throw new Error(
-        ^
+Sending transaction 2/5
+TX object: {
+  from: '0x8943545177806ED17B9F23F0a21ee5948eCaa776',
+  to: '0x614561D2d143621E126e87831AEF287678B442b8',
+  value: '100000000000000000',
+  gas: '21000',
+  gasPrice: '20000000000',
+  nonce: '1'
+}
+Transaction 2 failed before mining: Returned error: transaction indexing is in progress
 
-Error: Could not auto-detect Kurtosis geth RPC port. Check printed "kurtosis service ls" output above.
-    at getKurtosisRpcUrl (file:///home/narwhal/eth_overlay/attack_testbed/post_process_script.mjs:59:9)
-    at file:///home/narwhal/eth_overlay/attack_testbed/post_process_script.mjs:64:39
-    at ModuleJob.run (node:internal/modules/esm/module_job:193:25)
-    at async Promise.all (index 0)
-    at async ESMLoader.import (node:internal/modules/esm/loader:530:24)
-    at async loadESM (node:internal/process/esm_loader:91:5)
-    at async handleMainPromise (node:internal/modules/run_main:65:12)
+Sending transaction 3/5
+TX object: {
+  from: '0x8943545177806ED17B9F23F0a21ee5948eCaa776',
+  to: '0x614561D2d143621E126e87831AEF287678B442b8',
+  value: '100000000000000000',
+  gas: '21000',
+  gasPrice: '20000000000',
+  nonce: '2'
+}
+Transaction 3 failed before mining: Returned error: transaction indexing is in progress
+
+Sending transaction 4/5
+TX object: {
+  from: '0x8943545177806ED17B9F23F0a21ee5948eCaa776',
+  to: '0x614561D2d143621E126e87831AEF287678B442b8',
+  value: '100000000000000000',
+  gas: '21000',
+  gasPrice: '20000000000',
+  nonce: '3'
+}
+file:///home/narwhal/eth_overlay/attack_testbed/node_modules/web3-core/lib/esm/web3_request_manager.js:275
+                throw new InvalidResponseError(response, payload);
+                      ^
+
+InvalidResponseError: Returned error: transaction indexing is in progress
+    at Web3RequestManager._processJsonRpcResponse (file:///home/narwhal/eth_overlay/attack_testbed/node_modules/web3-core/lib/esm/web3_request_manager.js:275:23)
+    at Web3RequestManager.<anonymous> (file:///home/narwhal/eth_overlay/attack_testbed/node_modules/web3-core/lib/esm/web3_request_manager.js:161:29)
+    at Generator.next (<anonymous>)
+    at fulfilled (file:///home/narwhal/eth_overlay/attack_testbed/node_modules/web3-core/lib/esm/web3_request_manager.js:20:58)
+    at processTicksAndRejections (node:internal/process/task_queues:96:5) {
+  cause: {
+    code: -32000,
+    message: 'transaction indexing is in progress',
+    data: 'transaction indexing is in progress'
+  },
+  code: 101,
+  data: 'transaction indexing is in progress',
+  statusCode: undefined,
+  request: {
+    jsonrpc: '2.0',
+    id: '8d473515-25f3-48f3-bcb9-041a9918113a',
+    method: 'eth_getTransactionReceipt',
+    params: [
+      '0x6d7ad4d103eebc780aa387507b80e2fc4a2c8a9ca51c6e4b92f103bbb8d1ca73'
+    ]
+  }
+}

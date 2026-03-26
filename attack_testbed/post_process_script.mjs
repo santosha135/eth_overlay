@@ -3,14 +3,62 @@ import fs from 'fs';
 import { execSync } from 'child_process';
 
 function getKurtosisRpcUrl() {
-  const output = execSync('kurtosis service ls', { encoding: 'utf8' });
-  const match = output.match(/el-.*geth[\s\S]*?rpc:\s*8545\/tcp\s*->\s*127\.0\.0\.1:(\d+)/i);
+  let output = "";
 
-  if (!match) {
-    throw new Error('Could not auto-detect Kurtosis geth RPC port');
+  try {
+    output = execSync('kurtosis service ls', {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+  } catch (err) {
+    throw new Error(`Failed to run "kurtosis service ls": ${err.message}`);
   }
 
-  return `http://127.0.0.1:${match[1]}`;
+  console.log("===== kurtosis service ls output =====");
+  console.log(output);
+  console.log("======================================");
+
+  const lines = output.split('\n');
+
+  let inTargetService = false;
+  let targetServiceName = null;
+
+  for (const rawLine of lines) {
+    const line = rawLine.trimEnd();
+
+    // Detect service header lines like:
+    // 31338bb2767c   el-1-geth-lighthouse   engine-rpc: ...
+    const serviceMatch = line.match(/^([a-f0-9]+)\s+([^\s]+)\s+/i);
+    if (serviceMatch) {
+      const serviceName = serviceMatch[2];
+
+      // Adjust this if your EL node names differ
+      if (/^el-.*geth/i.test(serviceName)) {
+        inTargetService = true;
+        targetServiceName = serviceName;
+      } else {
+        inTargetService = false;
+        targetServiceName = null;
+      }
+      continue;
+    }
+
+    // While inside matching service block, look for rpc mapping
+    if (inTargetService) {
+      const rpcMatch = line.match(/rpc:\s*8545\/tcp\s*->\s*(?:127\.0\.0\.1|localhost):(\d+)/i);
+      if (rpcMatch) {
+        const rpcPort = rpcMatch[1];
+        const rpcUrl = `http://127.0.0.1:${rpcPort}`;
+        console.log(`Matched Kurtosis service: ${targetServiceName}`);
+        console.log(`Detected RPC URL: ${rpcUrl}`);
+        return rpcUrl;
+      }
+    }
+  }
+
+  throw new Error(
+    'Could not auto-detect Kurtosis geth RPC port. Check printed "kurtosis service ls" output above.'
+  );
 }
 
 const rpcUrl = process.env.RPC_URL || getKurtosisRpcUrl();

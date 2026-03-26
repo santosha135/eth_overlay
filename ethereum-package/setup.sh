@@ -8,6 +8,7 @@ set -Eeuo pipefail
 REMOTE_USER="narwhal"
 
 HOSTS=(
+  "10.10.0.23"
   "10.10.0.30"
 )
 

@@ -36,12 +36,14 @@ import (
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/holiman/uint256"
+	"github.com/ethereum/go-ethereum/eth/tracers/logger"	
 )
 
 var (
 	errBlockInterruptedByNewHead  = errors.New("new head arrived while building block")
 	errBlockInterruptedByRecommit = errors.New("recommit interrupt while building block")
 	errBlockInterruptedByTimeout  = errors.New("timeout while building block")
+	errBlocklistViolation = errors.New("blocklist violation")
 )
 
 // maxBlobsPerBlock returns the maximum number of blobs per block.
@@ -174,11 +176,19 @@ func (miner *Miner) applyVerifiedFragments(env *environment, fp FragmentProvider
 		env.gasPool = new(core.GasPool).AddGas(env.header.GasLimit)
 	}
 
+	log.Debug("Overlay merge: start", "numBuckets", numBuckets)
+
 	for bucket := uint32(0); bucket < numBuckets; bucket++ {
 		txs, wantRoot, ok := fp.GetFragment(bucket)
+
+		log.Debug("Overlay merge: bucket check", "bucket", bucket, "ok", ok, "txs", len(txs), "wantRoot", wantRoot)
+
 		if !ok || len(txs) == 0 {
 			continue
 		}
+		
+		log.Debug("Overlay merge: applying fragment", "bucket", bucket, "txs", len(txs))
+
 
 		snap := env.state.Snapshot()
 		gp := env.gasPool.Gas()
@@ -198,7 +208,7 @@ func (miner *Miner) applyVerifiedFragments(env *environment, fp FragmentProvider
 				if to := tx.To(); to == nil {
 					// contract creation: scan initcode
 					if err := pol.CheckTxAdmission(nil, tx.Data()); err != nil {
-						log.Info("Rejecting fragment tx by address policy (creation/initcode)",
+						log.Debug("Rejecting fragment tx by address policy (creation/initcode)",
 							"hash", tx.Hash(), "err", err)
 						okFrag = false
 						break
@@ -206,7 +216,7 @@ func (miner *Miner) applyVerifiedFragments(env *environment, fp FragmentProvider
 				} else {
 					// existing contract call: scan deployed runtime code
 					if err := pol.CheckCallTargetRuntime(env.state, *to); err != nil {
-						log.Info("Rejecting fragment tx by address policy (runtime bytecode)",
+						log.Debug("Rejecting fragment tx by address policy (runtime bytecode)",
 							"hash", tx.Hash(), "to", *to, "err", err)
 						okFrag = false
 						break
@@ -476,17 +486,55 @@ func (miner *Miner) commitBlobTransaction(env *environment, tx *types.Transactio
 }
 
 // applyTransaction runs the transaction. If execution fails, state and gas pool are reverted.
+// func (miner *Miner) applyTransaction(env *environment, tx *types.Transaction) (*types.Receipt, error) {
+// 	var (
+// 		snap = env.state.Snapshot()
+// 		gp   = env.gasPool.Gas()
+// 	)
+// 	receipt, err := core.ApplyTransaction(env.evm, env.gasPool, env.state, env.header, tx, &env.header.GasUsed)
+// 	if err != nil {
+// 		env.state.RevertToSnapshot(snap)
+// 		env.gasPool.SetGas(gp)
+// 	}
+// 	return receipt, err
+// }
+
 func (miner *Miner) applyTransaction(env *environment, tx *types.Transaction) (*types.Receipt, error) {
-	var (
-		snap = env.state.Snapshot()
-		gp   = env.gasPool.Gas()
-	)
-	receipt, err := core.ApplyTransaction(env.evm, env.gasPool, env.state, env.header, tx, &env.header.GasUsed)
-	if err != nil {
-		env.state.RevertToSnapshot(snap)
-		env.gasPool.SetGas(gp)
-	}
-	return receipt, err
+      if len(miner.blockList) != 0 && miner.needsSpeculativeCheck(env, tx) {
+              probe := env.state.Copy()
+              probeGP := new(core.GasPool).AddGas(env.gasPool.Gas())
+              touchTracer := logger.NewAccountTouchTracer()
+              probeCfg := env.evm.Config
+              probeCfg.Tracer = touchTracer.Hooks()
+              probeEVM := vm.NewEVM(env.evm.Context, probe, miner.chainConfig, probeCfg)
+              var probeUsed uint64
+              core.ApplyTransaction(probeEVM, probeGP, probe, env.header, tx, &probeUsed) // cost incurred here
+              if blockedAddress, blocked := miner.violatesBlockList(touchTracer); blocked {
+                      log.Debug("Transaction rejected after speculative execution", "hash", tx.Hash(), "blocked", blockedAddress)
+                      return nil, errBlocklistViolation
+              }
+      }
+      snapshot := env.state.Snapshot()
+      gasBefore := env.gasPool.Gas()
+      gasUsedBefore := env.header.GasUsed
+      receipt, err := core.ApplyTransaction(env.evm, env.gasPool, env.state, env.header, tx, &env.header.GasUsed)
+      if err != nil {
+              env.state.RevertToSnapshot(snapshot)
+              env.gasPool.SetGas(gasBefore)
+              env.header.GasUsed = gasUsedBefore
+              return nil, err
+      }
+      return receipt, nil
+}
+
+// needsSpeculativeCheck: only contract creations or calls into existing code can touch a
+// blocked address dynamically.
+func (miner *Miner) needsSpeculativeCheck(env *environment, tx *types.Transaction) bool {
+      to := tx.To()
+      if to == nil {
+              return true // contract creation — initcode may call out at runtime
+      }
+      return len(env.state.GetCode(*to)) > 0 // calling a contract
 }
 
 func (miner *Miner) commitTransactions(env *environment, plainTxs, blobTxs *transactionsByPriceAndNonce, interrupt *atomic.Int32) error {
@@ -583,12 +631,12 @@ func (miner *Miner) commitTransactions(env *environment, plainTxs, blobTxs *tran
 			continue
 		}
 
-		log.Info("Before execution")
+		log.Debug("Before execution")
 			// Address policy runtime gate: if this tx calls a contract, scan its runtime bytecode
 		if pol := txpool.GetAddressPolicy(); pol != nil && pol.Enabled {
 			if to := tx.To(); to != nil {
 				if err := pol.CheckCallTargetRuntime(env.state, *to); err != nil {
-					log.Info("Skipping tx by address policy (runtime bytecode)", "hash", ltx.Hash, "to", to, "err", err)
+					log.Debug("Skipping tx by address policy (runtime bytecode)", "hash", ltx.Hash, "to", to, "err", err)
 					txs.Pop()
 					continue
 				}
@@ -600,13 +648,21 @@ func (miner *Miner) commitTransactions(env *environment, plainTxs, blobTxs *tran
 		env.state.SetTxContext(tx.Hash(), env.tcount)
 
 		err := miner.commitTransaction(env, tx)
-		log.Info("commitTransaction result", "hash", ltx.Hash, "err", err)
+		log.Debug("commitTransaction result", "hash", ltx.Hash, "err", err)
 		switch {
 		case errors.Is(err, core.ErrNonceTooLow):
 			// New head notification data race between the transaction pool and miner, shift
 			log.Trace("Skipping transaction with low nonce", "hash", ltx.Hash, "sender", from, "nonce", tx.Nonce())
-			log.Info("Skipping transaction with low nonce", "hash", ltx.Hash, "sender", from, "nonce", tx.Nonce())
+			log.Debug("Skipping transaction with low nonce", "hash", ltx.Hash, "sender", from, "nonce", tx.Nonce())
 			txs.Shift()
+
+		case errors.Is(err, errBlocklistViolation):
+			log.Debug(
+				"Skipping blocklisted transaction sender for this payload",
+				"hash", ltx.Hash,
+				"sender", from,
+			)
+			txs.Pop()			
 
 		case errors.Is(err, nil):
 			// Everything ok, collect the logs and shift in the next transaction from the same account
@@ -695,7 +751,7 @@ func (miner *Miner) fillTransactions(interrupt *atomic.Int32, env *environment) 
 	// pendingPlainTxs := miner.txpool.Pending(filter)
 	pendingPlainTxs := miner.txpool.PendingActiveBucket(filter)
 
-	log.Info("Pending transactions before bucket filtering", "plain", len(pendingPlainTxs))
+	log.Debug("Pending transactions before bucket filtering", "plain", len(pendingPlainTxs))
 
 	filter.BlobTxs = true
 	if miner.chainConfig.IsOsaka(env.header.Number, env.header.Time) {
@@ -706,7 +762,7 @@ func (miner *Miner) fillTransactions(interrupt *atomic.Int32, env *environment) 
 	// pendingBlobTxs := miner.txpool.Pending(filter)
 	pendingBlobTxs := miner.txpool.PendingActiveBucket(filter)
 
-	log.Info("Pending blob transactions before bucket filtering", "blob", len(pendingBlobTxs))
+	log.Debug("Pending blob transactions before bucket filtering", "blob", len(pendingBlobTxs))
 	
 	// Split the pending transactions into locals and remotes.
 	prioPlainTxs, normalPlainTxs := make(map[common.Address][]*txpool.LazyTransaction), pendingPlainTxs
@@ -735,9 +791,16 @@ func (miner *Miner) fillTransactions(interrupt *atomic.Int32, env *environment) 
 		plainTxs := newTransactionsByPriceAndNonce(env.signer, normalPlainTxs, env.header.BaseFee)
 		blobTxs := newTransactionsByPriceAndNonce(env.signer, normalBlobTxs, env.header.BaseFee)
 
+		blockStart := time.Now()
+
 		if err := miner.commitTransactions(env, plainTxs, blobTxs, interrupt); err != nil {
 			return err
 		}
+
+		log.Debug("BLOCK BUILD COMPLETE",
+			"txs", env.tcount,
+			"elapsed", time.Since(blockStart),
+		)
 	}
 	return nil
 }
@@ -765,4 +828,19 @@ func signalToErr(signal int32) error {
 	default:
 		panic(fmt.Errorf("undefined signal %d", signal))
 	}
+}
+
+
+func (miner *Miner) violatesBlockList(
+	tracer *logger.AccountTouchTracer,
+) (common.Address, bool) {
+	if tracer == nil {
+		return common.Address{}, false
+	}
+	for _, address := range tracer.TouchedAddresses() {
+		if _, blocked := miner.blockList[address]; blocked {
+			return address, true
+		}
+	}
+	return common.Address{}, false
 }

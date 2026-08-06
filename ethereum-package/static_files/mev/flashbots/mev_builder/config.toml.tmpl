@@ -11,13 +11,18 @@ reth_datadir = "{{ .DataDir }}"
 coinbase_secret_key = "{{ .SecretKey }}"
 relay_secret_key = "{{ .SecretKey }}"
 
-# cl_node_url can be a single value, array of values, or passed by an environment variables with values separated with a comma
-cl_node_url = ["{{ .CLEndpoint }}"]
+# cl_node_url can be a single value, array of values, or passed by an environment variable.
+# Use the per-node CL_ENDPOINT env var (set by reth_launcher for each participant)
+cl_node_url = ["env:CL_ENDPOINT"]
 jsonrpc_server_port = 8645
 jsonrpc_server_ip = "0.0.0.0"
 el_node_ipc_path = "/tmp/reth.ipc"
 extra_data = "🐼⚡🤖"
 genesis_fork_version = "{{ .GenesisForkVersion }}"
+
+{{- if .HasBlocklist }}
+blocklist = "/config/blocklist.json"
+{{- end }}
 
 ignore_cancellable_orders = true
 

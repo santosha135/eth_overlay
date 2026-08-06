@@ -26,7 +26,8 @@ func (p *TxPool) IsLeaderForActiveBucket() bool {
 	}
 	epoch := p.bucketSched.Epoch()
 	active := p.bucketSched.ActiveBucket()
-	leader := bucket.LeaderIndex(epoch, active, p.groupSize)
-	log.Info("Checking leader gating for active bucket", "epoch", epoch, "activeBucket", active, "leaderIndex", leader, "myMemberIndex", p.myMemberIndex)
+	leader := bucket.LeaderIndex(epoch, p.groupID, p.groupSize)
+	// leader := bucket.LeaderIndex(epoch, active, p.groupSize)
+	log.Debug("Checking leader gating for active bucket", "epoch", epoch, "activeBucket", active, "leaderIndex", leader, "myMemberIndex", p.myMemberIndex)
 	return p.myMemberIndex == leader
 }

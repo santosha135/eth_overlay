@@ -8,6 +8,7 @@ lighthouse = import_module("../../../cl/lighthouse/lighthouse_launcher.star")
 # MEV Builder flags
 
 MEV_BUILDER_CONFIG_FILENAME = "config.toml"
+MEV_BUILDER_BLOCKLIST_FILENAME = "blocklist.json"
 MEV_BUILDER_MOUNT_DIRPATH_ON_SERVICE = "/config/"
 MEV_BUILDER_FILES_ARTIFACT_NAME = "mev-rbuilder-config"
 MEV_FILE_PATH_ON_CONTAINER = (
@@ -28,6 +29,7 @@ def new_builder_config(
     num_of_participants = shared_utils.zfill_custom(
         len(participants), len(str(len(participants)))
     )
+    blocklist = mev_params.mev_builder_blocklist
     builder_template_data = new_builder_config_template_data(
         network_params,
         constants.DEFAULT_MEV_PUBKEY,
@@ -39,6 +41,7 @@ def new_builder_config(
         mev_params.mev_builder_subsidy,
         mev_type,
         mev_params.run_multiple_relays,
+        blocklist,
     )
     flashbots_builder_config_template = read_file(
         static_files.FLASHBOTS_RBUILDER_CONFIG_FILEPATH
@@ -52,6 +55,21 @@ def new_builder_config(
     template_and_data_by_rel_dest_filepath[
         MEV_BUILDER_CONFIG_FILENAME
     ] = template_and_data
+
+    # When a blocklist is configured, render it into the same artifact so it is
+    # mounted next to config.toml at /config/blocklist.json for rbuilder to read.
+    if len(blocklist) > 0:
+        blocklist_json = "[{0}]".format(
+            ", ".join(['"{0}"'.format(addr) for addr in blocklist])
+        )
+        blocklist_template = read_file(
+            static_files.FLASHBOTS_RBUILDER_BLOCKLIST_FILEPATH
+        )
+        template_and_data_by_rel_dest_filepath[
+            MEV_BUILDER_BLOCKLIST_FILENAME
+        ] = shared_utils.new_template_and_data(
+            blocklist_template, {"BlocklistJson": blocklist_json}
+        )
 
     config_files_artifact_name = plan.render_templates(
         template_and_data_by_rel_dest_filepath, MEV_BUILDER_FILES_ARTIFACT_NAME
@@ -75,6 +93,7 @@ def new_builder_config_template_data(
     subsidy,
     mev_type,
     run_multiple_relays=False,
+    blocklist=[],    
 ):
     # Build the list of relays based on configuration
     relays = []
@@ -139,4 +158,5 @@ def new_builder_config_template_data(
         "FeeRecipient": fee_recipient,
         "ExtraData": extra_data,
         "Subsidy": subsidy,
+        "HasBlocklist": len(blocklist) > 0,        
     }

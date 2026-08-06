@@ -36,32 +36,75 @@ type OverlaySvc struct {
 	active		SlotKey 							// active slot
 	activeSet  	bool
 	activeEpoch uint64	
+	numBuckets    int
+	groupID       int
+	groupSize     int
+	myMemberIndex int
 }
 
-func NewOverlaySvc(sched *bucket.Scheduler) *OverlaySvc {
+// func NewOverlaySvc(sched *bucket.Scheduler) *OverlaySvc {
+// 	return &OverlaySvc{
+// 		args:      make(map[SlotKey]*OverlayArgs),
+// 		frags:     make(map[SlotKey]map[uint32]ExecFragment),
+// 		scheduler: sched,
+// 	}
+// }
+func NewOverlaySvc(sched *bucket.Scheduler, numBuckets, groupID, groupSize, myMemberIndex int) *OverlaySvc {
 	return &OverlaySvc{
-		args:      make(map[SlotKey]*OverlayArgs),
-		frags:     make(map[SlotKey]map[uint32]ExecFragment),
-		scheduler: sched,
+		args:          make(map[SlotKey]*OverlayArgs),
+		frags:         make(map[SlotKey]map[uint32]ExecFragment),
+		scheduler:     sched,
+		numBuckets:    numBuckets,
+		groupID:       groupID,
+		groupSize:     groupSize,
+		myMemberIndex: myMemberIndex,
 	}
 }
 
 func (o *OverlaySvc) SetActiveSlot(slotkey SlotKey, epoch uint64, args *OverlayArgs) {
 	o.mu.Lock()
+	defer o.mu.Unlock()
+
 	o.active = slotkey
 	o.activeSet = true
 	o.activeEpoch = epoch
 
-	// store args for leaders
-	arg_cp := *args
-	o.args[slotkey] = &arg_cp
+	argCopy := *args
+	o.args[slotkey] = &argCopy
 
-	// ensure frag map exists
 	if o.frags[slotkey] == nil {
 		o.frags[slotkey] = make(map[uint32]ExecFragment)
 	}
-	o.mu.Unlock()
+
+	// Keep only current slot to prevent unbounded memory growth.
+	for k := range o.args {
+		if k != slotkey {
+			delete(o.args, k)
+		}
+	}
+	for k := range o.frags {
+		if k != slotkey {
+			delete(o.frags, k)
+		}
+	}
 }
+
+// func (o *OverlaySvc) SetActiveSlot(slotkey SlotKey, epoch uint64, args *OverlayArgs) {
+// 	o.mu.Lock()
+// 	o.active = slotkey
+// 	o.activeSet = true
+// 	o.activeEpoch = epoch
+
+// 	// store args for leaders
+// 	arg_cp := *args
+// 	o.args[slotkey] = &arg_cp
+
+// 	// ensure frag map exists
+// 	if o.frags[slotkey] == nil {
+// 		o.frags[slotkey] = make(map[uint32]ExecFragment)
+// 	}
+// 	o.mu.Unlock()
+// }
 
 func (o *OverlaySvc) GetActiveSlot() (SlotKey, uint64, bool) {
 	o.mu.RLock()

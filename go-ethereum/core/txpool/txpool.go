@@ -18,6 +18,10 @@ package txpool
 
 import (
 	"os"
+	"strconv"
+	"sync/atomic"
+	"time"
+	"regexp"
 	"errors"
 	"fmt"
 	"math/big"
@@ -85,9 +89,12 @@ type TxPool struct {
 	sync chan chan error // Testing / simulator channel to block until internal reset is done
 	// bucket *bucket.Bucket
 
+	senderMu sync.Mutex
 	// ---- future bucket tracking (per sender) ----
 	futureMu sync.Mutex
-	future   map[common.Address]map[uint64]*types.Transaction // sender -> nonce -> txHash
+	// future   map[common.Address]map[uint64]*types.Transaction // sender -> nonce -> txHash
+	future map[common.Address]map[uint64]common.Hash
+	futureAddTime map[common.Hash]time.Time
 		// ---- bucket config ----
 	numBuckets     int
 	groupID        int
@@ -102,7 +109,71 @@ type TxPool struct {
 	bucketSched *bucket.Scheduler
 	bucketIdx   *BucketIndex
 
+	forcedActiveBucket atomic.Int64
 
+
+}
+
+func detectMemberIndexFromHostname() (int, bool) {
+	hostname, err := os.Hostname()
+	if err != nil {
+		log.Warn("Could not read hostname for scheduler identity", "err", err)
+		return 0, false
+	}
+
+	// Expected pod hostname:
+	// el-01-geth-lighthouse
+	// el-02-geth-lighthouse
+	// ...
+	// el-10-geth-lighthouse
+	re := regexp.MustCompile(`^el-([0-9]+)-`)
+	matches := re.FindStringSubmatch(hostname)
+	if len(matches) != 2 {
+		log.Warn("Could not detect scheduler member index from hostname", "hostname", hostname)
+		return 0, false
+	}
+
+	nodeNum, err := strconv.Atoi(matches[1])
+	if err != nil || nodeNum <= 0 {
+		log.Warn("Invalid node number in hostname", "hostname", hostname, "nodeNum", matches[1])
+		return 0, false
+	}
+
+	memberIndex := nodeNum - 1
+
+	log.Debug("Detected scheduler identity from hostname",
+		"hostname", hostname,
+		"nodeNum", nodeNum,
+		"memberIndex", memberIndex,
+	)
+
+	return memberIndex, true
+}
+
+func getenvInt(name string, def int) int {
+	v := os.Getenv(name)
+	if v == "" {
+		return def
+	}
+	n, err := strconv.Atoi(v)
+	if err != nil {
+		log.Warn("Invalid scheduler env int, using default", "name", name, "value", v, "default", def)
+		return def
+	}
+	return n
+}
+
+func getenvBool(name string, def bool) bool {
+	v := os.Getenv(name)
+	if v == "" {
+		return def
+	}
+	b, err := strconv.ParseBool(v)
+	if err != nil {
+		log.Warn("Invalid scheduler env bool, using default", "name", name, "value", v, "default", def)
+		return def
+	}
+	return b
 }
 
 // New creates a new transaction pool to gather, sort and filter inbound
@@ -133,19 +204,127 @@ func New(gasTip uint64, chain BlockChain, subpools []SubPool) (*TxPool, error) {
 		// bucket:   bucket.New(),
 	}
 
-	pool.future = make(map[common.Address]map[uint64]*types.Transaction)
+	// pool.future = make(map[common.Address]map[uint64]*types.Transaction)
+	pool.future = make(map[common.Address]map[uint64]common.Hash)
+	pool.futureAddTime = make(map[common.Hash]time.Time)
 
 		// ---- BUCKET + LEADER CONFIG (static for now) ----
-	pool.numBuckets = 10
-	pool.groupID = 0              // TODO: set per node
-	pool.rotationBlocks = 1       // rotate every N blocks (1 = every block)
+	// pool.numBuckets = 4
+	// pool.groupID = 0              // TODO: set per node
+	// pool.rotationBlocks = 1       // rotate every N blocks (1 = every block)
 
-	pool.leaderGating = true
-	pool.groupSize = 1            // TODO: number of miners/workers in this group
-	pool.myMemberIndex = 0        // TODO: unique id within group [0..groupSize-1]
+	// pool.leaderGating = true
+	// pool.groupSize = 1            // TODO: number of miners/workers in this group
+	// pool.myMemberIndex = 0        // TODO: unique id within group [0..groupSize-1]
+
+	// pool.numBuckets = getenvInt("GETH_SCHED_NUM_BUCKETS", 1)
+	// pool.groupID = getenvInt("GETH_SCHED_GROUP_ID", 0)
+	// pool.rotationBlocks = uint64(getenvInt("GETH_SCHED_ROTATION_BLOCKS", 1))
+
+	// pool.leaderGating = getenvBool("GETH_SCHED_LEADER_GATING", false)
+	// pool.groupSize = getenvInt("GETH_SCHED_GROUP_SIZE", 10)
+	// pool.myMemberIndex = getenvInt("GETH_SCHED_MEMBER_INDEX", pool.groupID)
+	pool.numBuckets = getenvInt("GETH_SCHED_NUM_BUCKETS", 15)
+	pool.rotationBlocks = uint64(getenvInt("GETH_SCHED_ROTATION_BLOCKS", 1))
+
+	pool.leaderGating = getenvBool("GETH_SCHED_LEADER_GATING", true)
+	// pool.groupSize = getenvInt("GETH_SCHED_GROUP_SIZE", pool.numBuckets)
+
+	// // Default identity from env
+	// pool.groupID = getenvInt("GETH_SCHED_GROUP_ID", -1)
+	// pool.myMemberIndex = getenvInt("GETH_SCHED_MEMBER_INDEX", -1)
+
+	// pool.numBuckets = getenvInt("GETH_SCHED_NUM_BUCKETS", 10)
+	// pool.rotationBlocks = uint64(getenvInt("GETH_SCHED_ROTATION_BLOCKS", 1))
+	// pool.leaderGating = getenvBool("GETH_SCHED_LEADER_GATING", true)
+
+	totalMiners := getenvInt("GETH_SCHED_TOTAL_MINERS", 30)
+
+	minerIndex := getenvInt("GETH_SCHED_MINER_INDEX", -1)
+	if minerIndex < 0 {
+		minerIndex = getenvInt("GETH_SCHED_MEMBER_INDEX", -1)
+	}
+	if minerIndex < 0 {
+		if detected, ok := detectMemberIndexFromHostname(); ok {
+			minerIndex = detected
+		}
+	}
+	if minerIndex < 0 {
+		minerIndex = 0
+	}
+
+	// pool.groupID = minerIndex % pool.numBuckets
+	// pool.myMemberIndex = minerIndex / pool.numBuckets
+
+	// pool.groupSize = 1 + (totalMiners-1-pool.groupID)/pool.numBuckets
+	// if pool.groupSize <= 0 {
+	// 	pool.groupSize = 1
+	// }
+	pool.groupID, pool.myMemberIndex, pool.groupSize =
+	bucket.BuildMinerGroupAssignment(minerIndex, totalMiners, pool.numBuckets)
+
+	log.Debug("Tx scheduler config",
+		"numBuckets", pool.numBuckets,
+		"totalMiners", totalMiners,
+		"minerIndex", minerIndex,
+		"groupID", pool.groupID,
+		"memberIndex", pool.myMemberIndex,
+		"groupSize", pool.groupSize,
+		"rotationBlocks", pool.rotationBlocks,
+		"leaderGating", pool.leaderGating,
+	)
+	// If env is missing, auto-detect from hostname
+	if pool.groupID < 0 || pool.myMemberIndex < 0 {
+		if detected, ok := detectMemberIndexFromHostname(); ok {
+			if pool.groupID < 0 {
+				pool.groupID = detected
+			}
+			if pool.myMemberIndex < 0 {
+				pool.myMemberIndex = detected
+			}
+		}
+	}
+
+	// Final fallback
+	if pool.groupID < 0 {
+		pool.groupID = 0
+	}
+	if pool.myMemberIndex < 0 {
+		pool.myMemberIndex = 0
+	}
+
+	if pool.groupID < 0 || pool.groupID >= pool.numBuckets {
+		log.Warn("Invalid groupID, normalizing", "groupID", pool.groupID, "numBuckets", pool.numBuckets)
+		pool.groupID = pool.groupID % pool.numBuckets
+		if pool.groupID < 0 {
+			pool.groupID += pool.numBuckets
+		}
+	}
+
+	log.Debug("Tx scheduler config",
+		"numBuckets", pool.numBuckets,
+		"groupID", pool.groupID,
+		"rotationBlocks", pool.rotationBlocks,
+		"leaderGating", pool.leaderGating,
+		"groupSize", pool.groupSize,
+		"memberIndex", pool.myMemberIndex,
+	)
+
+	if pool.myMemberIndex < 0 || pool.myMemberIndex >= pool.groupSize {
+		log.Warn("Invalid memberIndex, normalizing",
+			"memberIndex", pool.myMemberIndex,
+			"groupSize", pool.groupSize,
+		)
+		pool.myMemberIndex = pool.myMemberIndex % pool.groupSize
+		if pool.myMemberIndex < 0 {
+			pool.myMemberIndex += pool.groupSize
+		}
+	}
 
 	pool.bucketSched = bucket.NewScheduler(pool.numBuckets, pool.groupID, pool.rotationBlocks)
 	pool.bucketIdx = newBucketIndex()
+
+	pool.forcedActiveBucket.Store(-1)
 	
 	// ---- ADDRESS POLICY (censorship + hard-coded address detection) ----
 	// Configure via env var GETH_CENSORSHIP_CONFIG (JSON file). If unset, defaults to ./blocked_addresses.json.
@@ -157,9 +336,9 @@ func New(gasTip uint64, chain BlockChain, subpools []SubPool) (*TxPool, error) {
 		log.Warn("Address policy not loaded (continuing without it)", "path", policyPath, "err", err)
 	} else if pol != nil && pol.Enabled {
 		SetAddressPolicy(pol)
-		log.Info("Address policy loaded", "path", policyPath, "rejectAnyHardcoded", pol.RejectAnyHardcoded, "blocked", len(pol.BlockedMap))
+		log.Debug("Address policy loaded", "path", policyPath, "rejectAnyHardcoded", pol.RejectAnyHardcoded, "blocked", len(pol.BlockedMap))
 	} else {
-		log.Info("Address policy disabled", "path", policyPath)
+		log.Debug("Address policy disabled", "path", policyPath)
 	}
 
 
@@ -168,14 +347,24 @@ func New(gasTip uint64, chain BlockChain, subpools []SubPool) (*TxPool, error) {
 	}
 
 	reserver := NewReservationTracker()
+	// for i, subpool := range subpools {
+	// 	if err := subpool.Init(gasTip, head, reserver.NewHandle(i)); err != nil {
+	// 		subpool.SetBucketIndex(pool.bucketIdx) // inject bucket index to subpools initialized so far
+	// 		for j := i - 1; j >= 0; j-- {
+	// 			subpools[j].Close()
+	// 		}
+	// 		return nil, err
+	// 	}
+	// }
 	for i, subpool := range subpools {
-		if err := subpool.Init(gasTip, head, reserver.NewHandle(i)); err != nil {
-			subpool.SetBucketIndex(pool.bucketIdx) // inject bucket index to subpools initialized so far
-			for j := i - 1; j >= 0; j-- {
-				subpools[j].Close()
-			}
-			return nil, err
+	subpool.SetBucketIndex(pool.bucketIdx)
+
+	if err := subpool.Init(gasTip, head, reserver.NewHandle(i)); err != nil {
+		for j := i - 1; j >= 0; j-- {
+			subpools[j].Close()
 		}
+		return nil, err
+	}
 	}
 	go pool.loop(head)
 	return pool, nil
@@ -405,19 +594,26 @@ func (p *TxPool) checkAddressPolicy(tx *types.Transaction) error {
 	}
 
 	// 2) If it's a contract call, scan deployed runtime bytecode from current head state
-	p.stateLock.RLock()
+	// p.stateLock.RLock()
+	// code := p.state.GetCode(*to)
+	// p.stateLock.RUnlock()
+	p.stateLock.Lock()
 	code := p.state.GetCode(*to)
-	p.stateLock.RUnlock()
+	p.stateLock.Unlock()
 
-	log.Info("Scanning contract runtime bytecode",
-    "contract", to.Hex(),
-    "codeSize", len(code))
+	// log.Debug("Scanning contract runtime bytecode",
+    // "contract", to.Hex(),
+    // "codeSize", len(code))
 	
 	// If code length is 0, it's an EOA (not a contract), nothing to scan
 	if len(code) == 0 {
 		return nil
 	}
 
+	log.Debug("Scanning contract runtime bytecode",
+		"contract", to.Hex(),
+		"codeSize", len(code),
+	)
 	// Scan runtime bytecode for PUSH20 hard-coded addresses
 	return pol.CheckBytecodeBlocked(code)
 }
@@ -435,7 +631,7 @@ func (p *TxPool) Add(txs []*types.Transaction, sync bool) []error {
 	//
 	// We also need to track how the transactions were split across the subpools,
 	// so we can piece back the returned errors into the original order.
-	log.Info("Adding transactions to pool", "count", len(txs))
+	log.Debug("Adding transactions to pool", "count", len(txs))
 	
 
 	// example policy (you should load these from config/flags)
@@ -524,61 +720,146 @@ func (p *TxPool) Add(txs []*types.Transaction, sync bool) []error {
 		// if splits[i] != -1 && p.bucketIdx != nil && p.numBuckets > 0 {
 		// 		h := tx.Hash()
 		// 		bid := bucket.BucketForHash(h, p.numBuckets)
-		// 		log.Info("Assigning transaction to bucket", "hash", h, "bucketID", bid)
+		// 		log.Debug("Assigning transaction to bucket", "hash", h, "bucketID", bid)
 		// 		p.bucketIdx.set(h, bid)
 		// }
 
 		// ---- sender-bucket + future-bucket assignment ----
+
 		if splits[i] != -1 && p.bucketIdx != nil && p.numBuckets > 0 {
+		p.senderMu.Lock()
+		head := p.chain.CurrentBlock()
+		signer := types.MakeSigner(p.chain.Config(), head.Number, head.Time)
+		from, err := types.Sender(signer, tx)
+		p.senderMu.Unlock()
 
-			// Recover sender
-			head := p.chain.CurrentBlock()
-			signer := types.MakeSigner(p.chain.Config(), head.Number, head.Time)
-			from, err := types.Sender(signer, tx)
+		if err != nil {
+			h := tx.Hash()
+			if _, ok := p.bucketIdx.get(h); ok {
+				continue
+			}
+			bid := bucket.BucketForHash(h, p.numBuckets)
+			p.bucketIdx.set(h, bid)
+			continue
+		}
 
-			sendersTouched[from] = struct{}{}
-			if err != nil {
-				// If we can't recover sender, fall back to hash-based bucket (or skip)
-				h := tx.Hash()
-				bid := bucket.BucketForHash(h, p.numBuckets)
-				p.bucketIdx.set(h, bid)
-			} else {
-				h := tx.Hash()
+		sendersTouched[from] = struct{}{}
+		h := tx.Hash()
 
-				// Batch-local expected nonce tracker (so multiple txs from same sender in same Add call behave correctly)
-				// We'll keep it in a map outside the loop. See below.
-				expected := localNext[from]
+		if _, ok := p.bucketIdx.get(h); ok {
+			continue
+		}
 
-				// If this is the first time we see this sender in this batch, seed expected.
-				if expected == 0 && !seenSender[from] {
-					expected = p.PoolNonce(from)
-					if expected == 0 {
-						expected = p.Nonce(from)
-					}
-					localNext[from] = expected
-					seenSender[from] = true
-				}
+		expected := localNext[from]
+		if !seenSender[from] {
+			expected = p.PoolNonce(from)
+			localNext[from] = expected
+			seenSender[from] = true
+		}
+		// if expected == 0 && !seenSender[from] {
+		// 	expected = p.PoolNonce(from)
+		// 	if expected == 0 {
+		// 		expected = p.Nonce(from)
+		// 	}
+		// 	localNext[from] = expected
+		// 	seenSender[from] = true
+		// }
 
-				n := tx.Nonce()
+		n := tx.Nonce()
 
-				// If nonce is ahead of expected -> FUTURE bucket
-				if n > expected {
-					p.bucketIdx.set(h, futureBucketID)
-					p.trackFuture(from, n, h)
-					log.Info("Assigned tx to FUTURE bucket", "from", from, "hash", h, "nonce", n, "expected", expected)
-				} else {
-					// Normal bucket for sender (includes n==expected or replacement n<expected)
-					bid := p.bucketForSender(from)
-					p.bucketIdx.set(h, bid)
-					log.Info("Assigned tx to NORMAL sender bucket", "from", from, "hash", h, "bucketID", bid, "nonce", n, "expected", expected)
+		if n > expected {
+			p.bucketIdx.set(h, futureBucketID)
+			p.trackFuture(from, n, h)
 
-					// If it matches expected, advance expected for this batch
-					if n == expected {
-						localNext[from] = expected + 1
-					}
-				}
+			ts := time.Now()
+			p.futureMu.Lock()
+			p.futureAddTime[h] = ts
+			p.futureMu.Unlock()
+
+			log.Debug("Assigned tx to FUTURE bucket",
+				"from", from,
+				"hash", h,
+				"nonce", n,
+				"expected", expected,
+				"ts", ts,
+			)
+		} else {
+			bid := bucket.BucketForHash(h, p.numBuckets)
+			p.bucketIdx.set(h, bid)
+
+			log.Debug("Assigned tx to NORMAL bucket",
+				"from", from,
+				"hash", h,
+				"bucketID", bid,
+				"nonce", n,
+				"expected", expected,
+			)
+
+			if n == expected {
+				localNext[from] = expected + 1
 			}
 		}
+	}
+		// if splits[i] != -1 && p.bucketIdx != nil && p.numBuckets > 0 {
+
+		// 	// Recover sender
+		// 	// head := p.chain.CurrentBlock()
+		// 	// signer := types.MakeSigner(p.chain.Config(), head.Number, head.Time)
+		// 	// from, err := types.Sender(signer, tx)
+		// 	p.senderMu.Lock()
+		// 	head := p.chain.CurrentBlock()
+		// 	signer := types.MakeSigner(p.chain.Config(), head.Number, head.Time)
+		// 	from, err := types.Sender(signer, tx)
+		// 	p.senderMu.Unlock()
+
+		// 	sendersTouched[from] = struct{}{}
+		// 	if err != nil {
+		// 		// If we can't recover sender, fall back to hash-based bucket (or skip)
+		// 		h := tx.Hash()
+		// 		bid := bucket.BucketForHash(h, p.numBuckets)
+		// 		p.bucketIdx.set(h, bid)
+		// 	} else {
+		// 		h := tx.Hash()
+
+		// 		// Batch-local expected nonce tracker (so multiple txs from same sender in same Add call behave correctly)
+		// 		// We'll keep it in a map outside the loop. See below.
+		// 		expected := localNext[from]
+
+		// 		// If this is the first time we see this sender in this batch, seed expected.
+		// 		if expected == 0 && !seenSender[from] {
+		// 			expected = p.PoolNonce(from)
+		// 			if expected == 0 {
+		// 				expected = p.Nonce(from)
+		// 			}
+		// 			localNext[from] = expected
+		// 			seenSender[from] = true
+		// 		}
+
+		// 		n := tx.Nonce()
+
+		// 		// If nonce is ahead of expected -> FUTURE bucket
+		// 		if n > expected {
+		// 						p.bucketIdx.set(h, futureBucketID)
+		// 						p.trackFuture(from, n, h)
+		// 						p.futureMu.Lock()
+		// 						p.futureAddTime[h] = time.Now()
+		// 						p.futureMu.Unlock()
+		// 						log.Debug("Assigned tx to FUTURE bucket", "from", from, "hash", h, "nonce", n, "expected", expected, "ts", p.futureAddTime[h])
+		// 		} else {
+		// 			// Normal bucket for sender (includes n==expected or replacement n<expected)
+		// 			// bid := p.bucketForSender(from)
+		// 			bid := bucket.BucketForHash(h, p.numBuckets)
+		// 			p.bucketIdx.set(h, bid)
+		// 			log.Debug("TX ARRIVED", "hash", h, "from", from, "nonce", n, "time", time.Now().UnixMilli(),)
+		// 			log.Debug("Assigned tx to NORMAL sender bucket", "from", from, "hash", h, "bucketID", bid, "nonce", n, "expected", expected)
+
+		// 			// If it matches expected, advance expected for this batch
+		// 				if n == expected {
+		// 					localNext[from] = expected + 1
+		// 				}
+		// 		}
+		// 	}
+		// }
 	}
 
 	// Add into subpools
@@ -671,8 +952,12 @@ func (p *TxPool) PoolNonce(addr common.Address) uint64 {
 // Nonce returns the next nonce of an account at the current chain head. Unlike
 // PoolNonce, this function does not account for pending executable transactions.
 func (p *TxPool) Nonce(addr common.Address) uint64 {
-	p.stateLock.RLock()
-	defer p.stateLock.RUnlock()
+	// p.stateLock.RLock()
+	p.stateLock.Lock()
+
+	// defer p.stateLock.RUnlock()
+	defer p.stateLock.Unlock()
+
 
 	return p.state.GetNonce(addr)
 }
@@ -699,21 +984,37 @@ func (p *TxPool) trackFuture(from common.Address, nonce uint64, hash common.Hash
 		p.future[from] = m
 	}
 	m[nonce] = hash
+	// ensure we have an admission timestamp for tracked future txs
+	if _, ok := p.futureAddTime[hash]; !ok {
+		p.futureAddTime[hash] = time.Now()
+	}
 }
 
 // untrackFuture removes from future tracking.
+// func (p *TxPool) untrackFuture(from common.Address, nonce uint64) {
+// 	p.futureMu.Lock()
+// 	defer p.futureMu.Unlock()
+
+// 	m := p.future[from]
+// 	if m == nil {
+// 		m = make(map[uint64]*types.Transaction)
+// 		p.future[from] = m
+// 	}
+// 	m[nonce] = tx
+// }
 func (p *TxPool) untrackFuture(from common.Address, nonce uint64) {
 	p.futureMu.Lock()
 	defer p.futureMu.Unlock()
 
 	m := p.future[from]
 	if m == nil {
-		m = make(map[uint64]*types.Transaction)
-		p.future[from] = m
+		return
 	}
-	m[nonce] = tx
+	delete(m, nonce)
+	if len(m) == 0 {
+		delete(p.future, from)
+	}
 }
-
 // promoteFutureIfReady moves any future txs whose nonce has become "next" into normal sender bucket.
 // NOTE: This only updates the bucket index mapping; actual tx execution status is handled by subpools.
 func (p *TxPool) promoteFutureIfReady(from common.Address) {
@@ -721,10 +1022,11 @@ func (p *TxPool) promoteFutureIfReady(from common.Address) {
 		return
 	}
 	// Determine the "next" nonce the pool expects now
+	// next := p.PoolNonce(from)
+	// if next == 0 {
+	// 	next = p.Nonce(from)
+	// }
 	next := p.PoolNonce(from)
-	if next == 0 {
-		next = p.Nonce(from)
-	}
 
 	for {
 		var h common.Hash
@@ -757,9 +1059,21 @@ func (p *TxPool) promoteFutureIfReady(from common.Address) {
 		//TODO: implement overdraft solution
 		
 		// Promote bucket mapping: future -> normal sender bucket
-		bid := p.bucketForSender(from)
+		// bid := p.bucketForSender(from)
+		bid := bucket.BucketForHash(h, p.numBuckets)
 		p.bucketIdx.set(h, bid)
-		log.Info("Promoted tx from future bucket to normal sender bucket", "from", from, "hash", h, "bucketID", bid, "nonce", next)
+		p.futureMu.Lock()
+		addt, ok := p.futureAddTime[h]
+		if ok {
+			delete(p.futureAddTime, h)
+		}
+		p.futureMu.Unlock()
+		if ok {
+			latency := time.Since(addt)
+			log.Debug("Promoted tx from future bucket to normal sender bucket", "from", from, "hash", h, "bucketID", bid, "nonce", next, "admission_latency_ms", latency.Milliseconds())
+		} else {
+			log.Debug("Promoted tx from future bucket to normal sender bucket", "from", from, "hash", h, "bucketID", bid, "nonce", next)
+		}
 
 		next++
 	}
@@ -877,4 +1191,20 @@ func (p *TxPool) FilterType(kind byte) bool {
 		}
 	}
 	return false
+}
+
+func (p *TxPool) SetActiveBucket(bucketID uint32) {
+	p.forcedActiveBucket.Store(int64(bucketID))
+}
+
+func (p *TxPool) ClearActiveBucket() {
+	p.forcedActiveBucket.Store(-1)
+}
+
+func (p *TxPool) ForcedActiveBucket() (int, bool) {
+	v := p.forcedActiveBucket.Load()
+	if v < 0 {
+		return 0, false
+	}
+	return int(v), true
 }

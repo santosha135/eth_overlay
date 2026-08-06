@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: stress-pod
+spec:
+  nodeSelector:
+    kubernetes.io/hostname: prism-pc-b
+  volumes:
+  - name: shared
+    emptyDir: {}
+  initContainers:
+  - name: init
+    image: busybox
+    command: ["sh", "-c", "echo init > /shared/test"]
+    volumeMounts:
+    - mountPath: /shared
+      name: shared
+  containers:
+  - name: main
+    image: geth-overlay:local
+    command: ["sh", "-c", "cat /shared/test && sleep 300"]
+    ports:
+    - containerPort: 8545
+    - containerPort: 8546
+    - containerPort: 8551
+    - containerPort: 30303
+      protocol: TCP
+    - containerPort: 30303
+      protocol: UDP
+    volumeMounts:
+    - mountPath: /shared
+      name: shared

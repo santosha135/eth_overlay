@@ -49,6 +49,7 @@ type Config struct {
 	GasPrice            *big.Int       // Minimum gas price for mining a transaction
 	Recommit            time.Duration  // The time interval for miner to re-create mining work.
 	MaxBlobsPerBlock    int            // Maximum number of blobs per block (0 for unset uses protocol default)
+	Blocklist []common.Address
 }
 
 // DefaultConfig contains default settings for miner.
@@ -75,10 +76,36 @@ type Miner struct {
 	chain       *core.BlockChain
 	pending     *pending
 	pendingMu   sync.Mutex // Lock protects the pending block
+	blockList map[common.Address]struct{}
 }
 
 // New creates a new miner with provided config.
 func New(eth Backend, config Config, engine consensus.Engine) *Miner {
+	if len(config.Blocklist) == 0 {
+		path := os.Getenv("GETH_CENSORSHIP_CONFIG")
+		if path == "" {
+				path = "blocked_addresses.json"
+		}
+		if b, err := os.ReadFile(path); err == nil {
+				var cfg struct {
+						Enabled bool     `json:"enabled"`
+						Blocked []string `json:"blocked"`
+				}
+				if json.Unmarshal(b, &cfg) == nil && cfg.Enabled {
+						for _, s := range cfg.Blocked {
+								if common.IsHexAddress(s) {
+										config.Blocklist = append(config.Blocklist, common.HexToAddress(s))
+								}
+						}
+				}
+		}
+	}
+
+	blockList := make(map[common.Address]struct{}, len(config.Blocklist))
+	for _, address := range config.Blocklist {
+		blockList[address] = struct{}{}
+	}	
+	
 	return &Miner{
 		config:      &config,
 		chainConfig: eth.BlockChain().Config(),
@@ -86,6 +113,7 @@ func New(eth Backend, config Config, engine consensus.Engine) *Miner {
 		txpool:      eth.TxPool(),
 		chain:       eth.BlockChain(),
 		pending:     &pending{},
+		blockList:   blockList,
 	}
 }
 

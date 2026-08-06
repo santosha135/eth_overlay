@@ -1,0 +1,68 @@
+{
+    "apiVersion": "v1",
+    "kind": "Namespace",
+    "metadata": {
+        "annotations": {
+            "kurtosistech.com/enclave-creation-time": "2026-04-03T02:08:58Z",
+            "kurtosistech.com/enclave-name": "local-eth-testnet"
+        },
+        "creationTimestamp": "2026-04-03T02:08:58Z",
+        "deletionTimestamp": "2026-04-03T02:09:01Z",
+        "labels": {
+            "kubernetes.io/metadata.name": "kt-local-eth-testnet",
+            "kurtosis_enclave_uuid": "7a68928f0d584f52894444463a168c58",
+            "kurtosistech.com/app-id": "kurtosis",
+            "kurtosistech.com/enclave-id": "7a68928f0d584f52894444463a168c58",
+            "kurtosistech.com/guid": "7a68928f0d584f52894444463a168c58",
+            "kurtosistech.com/id": "7a68928f0d584f52894444463a168c58",
+            "kurtosistech.com/resource-type": "enclave"
+        },
+        "name": "kt-local-eth-testnet",
+        "resourceVersion": "8288",
+        "uid": "19d9dee4-05e5-4a3c-a527-d9251ec51349"
+    },
+    "spec": {
+        "finalizers": [
+        ]
+    },
+    "status": {
+        "conditions": [
+            {
+                "lastTransitionTime": "2026-04-03T02:09:06Z",
+                "message": "Discovery failed for some groups, 1 failing: unable to retrieve the complete list of server APIs: metrics.k8s.io/v1beta1: stale GroupVersion discovery: metrics.k8s.io/v1beta1",
+                "reason": "DiscoveryFailed",
+                "status": "True",
+                "type": "NamespaceDeletionDiscoveryFailure"
+            },
+            {
+                "lastTransitionTime": "2026-04-03T02:09:10Z",
+                "message": "All legacy kube types successfully parsed",
+                "reason": "ParsedGroupVersions",
+                "status": "False",
+                "type": "NamespaceDeletionGroupVersionParsingFailure"
+            },
+            {
+                "lastTransitionTime": "2026-04-03T02:09:10Z",
+                "message": "All content successfully deleted, may be waiting on finalization",
+                "reason": "ContentDeleted",
+                "status": "False",
+                "type": "NamespaceDeletionContentFailure"
+            },
+            {
+                "lastTransitionTime": "2026-04-03T02:09:10Z",
+                "message": "All content successfully removed",
+                "reason": "ContentRemoved",
+                "status": "False",
+                "type": "NamespaceContentRemaining"
+            },
+            {
+                "lastTransitionTime": "2026-04-03T02:09:10Z",
+                "message": "All content-preserving finalizers finished",
+                "reason": "ContentHasNoFinalizers",
+                "status": "False",
+                "type": "NamespaceFinalizersRemaining"
+            }
+        ],
+        "phase": "Terminating"
+    }
+}

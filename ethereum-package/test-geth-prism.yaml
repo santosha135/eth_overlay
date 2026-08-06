@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-geth-prism
+spec:
+  nodeSelector:
+    kubernetes.io/hostname: prism-pc-b
+  restartPolicy: Never
+  containers:
+  - name: geth
+    image: geth-overlay:local
+    imagePullPolicy: IfNotPresent
+    command: ["sh", "-c"]
+    args:
+    - |
+      echo "Testing geth image on prism-pc-b"
+      which geth
+      geth version
+      sleep 30

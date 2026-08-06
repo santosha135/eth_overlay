@@ -20,6 +20,8 @@ package catalyst
 import (
 	"errors"
 	"fmt"
+	"os"
+	"strings"   // <-- ADD THIS
 	"reflect"
 	"strconv"
 	"sync"
@@ -47,23 +49,139 @@ import (
 )
 
 // Register adds the engine API to the full node.
-func Register(stack *node.Node, backend *eth.Ethereum) error {
-	api := NewConsensusAPI(backend)
+// func Register(stack *node.Node, backend *eth.Ethereum) error {
+// 	api := NewConsensusAPI(backend)
 
-	stack.RegisterAPIs([]rpc.API{
-		{
-			Namespace:     "engine",
-			Service:       api,
-			Authenticated: true,
-		},
-		//TODO: block build
-		{
-			Namespace: "overlay",
-			Service: NewOverlayRPC(api.overlay), 
-			Authenticated: false, // true for auth
-		},
-	})
-	return nil
+// 	stack.RegisterAPIs([]rpc.API{
+// 		{
+// 			Namespace:     "engine",
+// 			Service:       api,
+// 			Authenticated: true,
+// 		},
+// 		//TODO: block build
+// 		{
+// 			Namespace: "overlay",
+// 			Service: NewOverlayRPC(api.overlay), 
+// 			Authenticated: false, // true for auth
+// 		},
+// 	})
+// 	return nil
+// }
+
+func getenvInt(name string, def int) int {
+	v := os.Getenv(name)
+	if v == "" {
+		return def
+	}
+	n, err := strconv.Atoi(v)
+	if err != nil {
+		log.Warn("Invalid scheduler env int, using default", "name", name, "value", v, "default", def)
+		return def
+	}
+	return n
+}
+
+func overlayMemberIndexFromHostname() int {
+	host := os.Getenv("HOSTNAME")
+
+	// expected: el-01-geth-lighthouse
+	parts := strings.Split(host, "-")
+	if len(parts) >= 2 && parts[0] == "el" {
+		n, err := strconv.Atoi(parts[1])
+		if err == nil && n > 0 {
+			return n - 1
+		}
+	}
+
+	if v := os.Getenv("GETH_SCHED_MINER_INDEX"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err == nil {
+			return n
+		}
+	}
+
+	if v := os.Getenv("GETH_SCHED_MEMBER_INDEX"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err == nil {
+			return n
+		}
+	}
+
+	return 0
+}
+
+func Register(stack *node.Node, backend *eth.Ethereum) error {
+    api := NewConsensusAPI(backend)
+
+    overlayRPC := NewOverlayRPC(api.overlay)
+
+    stack.RegisterAPIs([]rpc.API{
+        {
+            Namespace:     "engine",
+            Service:       api,
+            Authenticated: true,
+        },
+        {
+            Namespace:     "overlay",
+            Service:       overlayRPC,
+            Authenticated: false,
+        },
+    })
+
+    // client := stack.Attach()
+	
+	collector := os.Getenv("GETH_OVERLAY_COLLECTOR_RPC")
+
+	var client *rpc.Client
+	if collector != "" {
+		var err error
+		client, err = rpc.DialHTTP(collector)
+		if err != nil {
+			log.Warn("Failed to dial overlay collector, falling back to local",
+				"collector", collector,
+				"err", err,
+			)
+			client = stack.Attach()
+		}
+	} else {
+		client = stack.Attach()
+	}
+
+    go func() {
+	
+        loop := &LeaderLoop{
+            LocalEth:    backend,
+            OverlayRPC: client,
+            Scheduler:  api.overlay.scheduler,
+            // MyIndex:    api.overlay.scheduler.MemberIndex(),
+			NumBuckets:    api.overlay.numBuckets,
+			GroupID:       api.overlay.groupID,
+			GroupSize:     api.overlay.groupSize,
+			MyMemberIndex: api.overlay.myMemberIndex,
+			// NumBuckets:    numBuckets,
+			// GroupID:       groupID,
+			// GroupSize:     groupSize,
+			// MyMemberIndex: myMemberIndex,
+            PollEvery:  200 * time.Millisecond,
+        }
+
+        // log.Info("Overlay leader loop starting", "myIndex", 0)
+		// log.Info("Overlay leader loop starting", "myIndex", 0, "hostname", os.Getenv("HOSTNAME"))
+		// log.Info("Overlay leader loop starting", "myIndex", api.overlay.scheduler.MemberIndex(), "hostname", os.Getenv("HOSTNAME"))
+
+		log.Info("Overlay leader loop starting",
+			"groupID", api.overlay.groupID,
+			"memberIndex", api.overlay.myMemberIndex,
+			"groupSize", api.overlay.groupSize,
+			"hostname", os.Getenv("HOSTNAME"),
+		)
+
+        if err := loop.Run(context.Background()); err != nil {
+            log.Warn("Overlay leader loop stopped", "err", err)
+        }
+    }()
+
+    return nil
 }
 
 const (
@@ -153,16 +271,57 @@ func newConsensusAPIWithoutHeartbeat(eth *eth.Ethereum) *ConsensusAPI {
 		log.Warn("Engine API started but chain not configured for merge yet")
 	}
 
-	sched := bucket.NewScheduler(bucket.DefaultNumBuckets, /*groupID*/ 0, /*rotationBlocks*/ 1)
+	// sched := bucket.NewScheduler(bucket.DefaultNumBuckets, /*groupID*/ 0, /*rotationBlocks*/ 1)
 
+	// memberIndex := overlayMemberIndexFromHostname()
+
+	// sched := bucket.NewScheduler(bucket.DefaultNumBuckets, memberIndex, 1)
+	numBuckets := getenvInt("GETH_SCHED_NUM_BUCKETS", bucket.DefaultNumBuckets)
+	rotationBlocks := uint64(getenvInt("GETH_SCHED_ROTATION_BLOCKS", 1))
+	totalMiners := getenvInt("GETH_SCHED_TOTAL_MINERS", 12)
+	// totalMiners := getenvInt("GETH_SCHED_TOTAL_MINERS", numBuckets)
+
+	minerIndex := getenvInt("GETH_SCHED_MINER_INDEX", -1)
+	if minerIndex < 0 {
+		minerIndex = overlayMemberIndexFromHostname()
+	}
+
+	// groupID := minerIndex % numBuckets
+	// myMemberIndex := minerIndex / numBuckets
+	// groupSize := 1 + (totalMiners-1-groupID)/numBuckets
+	// if groupSize <= 0 {
+	// 	groupSize = 1
+	// }
+	groupID, myMemberIndex, groupSize :=
+	bucket.BuildMinerGroupAssignment(minerIndex, totalMiners, numBuckets)
+
+	sched := bucket.NewScheduler(numBuckets, groupID, rotationBlocks)
+
+	log.Info("Overlay scheduler config",
+		"numBuckets", numBuckets,
+		"totalMiners", totalMiners,
+		"minerIndex", minerIndex,
+		"groupID", groupID,
+		"groupSize", groupSize,
+		"rotationBlocks", rotationBlocks,
+		"hostname", os.Getenv("HOSTNAME"),
+	)
+
+	log.Info(
+		"Overlay scheduler config",
+		"numBuckets", sched.NumBuckets(),
+		"hostname", os.Getenv("HOSTNAME"),
+	)
 	api := &ConsensusAPI{
 		eth:               eth,
 		remoteBlocks:      newHeaderQueue(),
 		localBlocks:       newPayloadQueue(),
 		invalidBlocksHits: make(map[common.Hash]int),
 		invalidTipsets:    make(map[common.Hash]*types.Header),
-		overlay:           NewOverlaySvc(sched), // from overlay_impl.go
+		// overlay:           NewOverlaySvc(sched), // from overlay_impl.go
+		overlay: NewOverlaySvc(sched, numBuckets, groupID, groupSize, myMemberIndex),
 	}
+
 	eth.Downloader().SetBadBlockCallback(api.setInvalidAncestor)
 	return api
 }
@@ -362,6 +521,8 @@ func (api *ConsensusAPI) forkchoiceUpdated(update engine.ForkchoiceStateV1, payl
 			Withdrawals:  payloadAttributes.Withdrawals,
 			BeaconRoot:   payloadAttributes.BeaconRoot,
 			Version:      payloadVersion,
+			NumBuckets:   uint32(api.overlay.scheduler.NumBuckets()),
+
 		}
 		id := args.Id()
 		

@@ -1,0 +1,78 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: kurtosis-ethereum-auto-spread
+spec:
+  background: false
+  rules:
+  - name: spread-execution-clients
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+          names:
+          - "el-*-geth-*"
+    mutate:
+      patchStrategicMerge:
+        metadata:
+          labels:
+            +(eth-role): execution
+        spec:
+          +(nodeSelector):
+            kurtosis-worker: "true"
+          +(topologySpreadConstraints):
+          - maxSkew: 1
+            topologyKey: kubernetes.io/hostname
+            whenUnsatisfiable: ScheduleAnyway
+            labelSelector:
+              matchLabels:
+                eth-role: execution
+
+  - name: spread-consensus-clients
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+          names:
+          - "cl-*-*"
+    mutate:
+      patchStrategicMerge:
+        metadata:
+          labels:
+            +(eth-role): consensus
+        spec:
+          +(nodeSelector):
+            kurtosis-worker: "true"
+          +(topologySpreadConstraints):
+          - maxSkew: 1
+            topologyKey: kubernetes.io/hostname
+            whenUnsatisfiable: ScheduleAnyway
+            labelSelector:
+              matchLabels:
+                eth-role: consensus
+
+  - name: spread-validator-clients
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+          names:
+          - "vc-*-*"
+    mutate:
+      patchStrategicMerge:
+        metadata:
+          labels:
+            +(eth-role): validator
+        spec:
+          +(nodeSelector):
+            kurtosis-worker: "true"
+          +(topologySpreadConstraints):
+          - maxSkew: 1
+            topologyKey: kubernetes.io/hostname
+            whenUnsatisfiable: ScheduleAnyway
+            labelSelector:
+              matchLabels:
+                eth-role: validator

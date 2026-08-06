@@ -1,0 +1,113 @@
+{
+  "volumes": [
+    {
+      "name": "logsdb",
+      "hostPath": {
+        "path": "/var/log/kurtosis",
+        "type": ""
+      }
+    },
+    {
+      "name": "kube-api-access-j92x2",
+      "projected": {
+        "sources": [
+          {
+            "serviceAccountToken": {
+              "expirationSeconds": 3607,
+              "path": "token"
+            }
+          },
+          {
+            "configMap": {
+              "name": "kube-root-ca.crt",
+              "items": [
+                {
+                  "key": "ca.crt",
+                  "path": "ca.crt"
+                }
+              ]
+            }
+          },
+          {
+            "downwardAPI": {
+              "items": [
+                {
+                  "path": "namespace",
+                  "fieldRef": {
+                    "apiVersion": "v1",
+                    "fieldPath": "metadata.namespace"
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "defaultMode": 420
+      }
+    }
+  ],
+  "containers": [
+    {
+      "name": "kurtosis-engine-container",
+      "image": "kurtosistech/engine:1.18.2",
+      "ports": [
+        {
+          "name": "grpc",
+          "containerPort": 9710,
+          "protocol": "TCP"
+        }
+      ],
+      "env": [
+        {
+          "name": "SERIALIZED_ARGS",
+          "value": "{\"grpcListenPortNum\":9710,\"logLevelStr\":\"debug\",\"imageVersionTag\":\"1.18.2\",\"metricsUserId\":\"4f286dab12e3e76a3c3e5a0b2d0130ec4f18d733a0efb01b37541d00baef3e3b\",\"didUserAcceptSendingMetrics\":true,\"kurtosisBackendType\":\"kubernetes\",\"kurtosisBackendConfig\":{\"StorageClass\":\"local-path\"},\"onBastionHost\":false,\"poolSize\":0,\"enclaveEnvVars\":\"{}\",\"is_ci\":false,\"cloud_user_id\":\"\",\"cloud_instance_id\":\"\",\"restart_api_containers\":false,\"domain\":\"\",\"logRetentionPeriod\":\"168h\",\"logsCollectorFilters\":null,\"logsCollectorParsers\":null}"
+        }
+      ],
+      "resources": {},
+      "volumeMounts": [
+        {
+          "name": "logsdb",
+          "mountPath": "/var/log/kurtosis"
+        },
+        {
+          "name": "kube-api-access-j92x2",
+          "readOnly": true,
+          "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
+        }
+      ],
+      "terminationMessagePath": "/dev/termination-log",
+      "terminationMessagePolicy": "File",
+      "imagePullPolicy": "IfNotPresent"
+    }
+  ],
+  "restartPolicy": "Never",
+  "terminationGracePeriodSeconds": 30,
+  "dnsPolicy": "ClusterFirst",
+  "serviceAccountName": "kurtosis-engine-0ab175e8273e43f7823ec53bfe2ff698",
+  "serviceAccount": "kurtosis-engine-0ab175e8273e43f7823ec53bfe2ff698",
+  "nodeName": "prism-pc-b",
+  "securityContext": {},
+  "imagePullSecrets": [
+    {
+      "name": "kurtosis-image"
+    }
+  ],
+  "schedulerName": "default-scheduler",
+  "tolerations": [
+    {
+      "key": "node.kubernetes.io/not-ready",
+      "operator": "Exists",
+      "effect": "NoExecute",
+      "tolerationSeconds": 300
+    },
+    {
+      "key": "node.kubernetes.io/unreachable",
+      "operator": "Exists",
+      "effect": "NoExecute",
+      "tolerationSeconds": 300
+    }
+  ],
+  "priority": 0,
+  "enableServiceLinks": true,
+  "preemptionPolicy": "PreemptLowerPriority"
+}

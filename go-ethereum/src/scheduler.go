@@ -14,6 +14,7 @@ type Scheduler struct {
 	numBuckets     uint64
 	groupID        uint64
 	rotationBlocks uint64
+	memberIndex     uint64
 	headBlock      atomic.Uint64
 }
 
@@ -63,4 +64,12 @@ func LeaderIndex(epoch uint64, bucketID int, groupSize int) int {
 		return 0
 	}
 	return int((epoch + uint64(bucketID)) % uint64(groupSize))
+}
+
+func (s *Scheduler) GroupID() int {
+	return int(s.groupID)
+}
+
+func (s *Scheduler) MemberIndex() int {
+	return int(s.groupID)
 }

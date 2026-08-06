@@ -2,7 +2,8 @@ package miner
 
 import (
 	"fmt"
-
+    "time"
+	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
@@ -16,11 +17,36 @@ func (miner *Miner) BuildExecutedFragment(args *BuildPayloadArgs, bucketID uint3
 		return nil, common.Hash{}, fmt.Errorf("nil args")
 	}
 
-	// TODO: verify if this is needed otherwise delete the if
-	if sw, ok := any(miner.txpool).(interface{ SetActiveBucket(uint32) }); ok {
-		sw.SetActiveBucket(bucketID)
-	}
+	start := time.Now()
 
+	log.Debug("FRAGMENT BUILD START",
+		"bucket", bucketID,
+		"time", time.Now().UnixMilli(),
+	)
+
+	// TODO: verify if this is needed otherwise delete the if
+	// if sw, ok := any(miner.txpool).(interface{ SetActiveBucket(uint32) }); ok {
+	// 	sw.SetActiveBucket(bucketID)
+	// }
+
+	// if sw, ok := any(miner.txpool).(interface {
+	// 	SetActiveBucket(uint32)
+	// 	ClearActiveBucket()
+	// }); ok {
+	// 	sw.SetActiveBucket(bucketID)
+	// 	defer sw.ClearActiveBucket()
+	// }
+	if sw, ok := any(miner.txpool).(interface {
+	SetActiveBucket(uint32)
+	ClearActiveBucket()
+	}); ok {
+		log.Debug("FORCED ACTIVE BUCKET SET", "bucket", bucketID)
+		sw.SetActiveBucket(bucketID)
+		defer func() {
+			sw.ClearActiveBucket()
+			log.Debug("FORCED ACTIVE BUCKET CLEARED", "bucket", bucketID)
+		}()
+	}
 	// Build an env on top of Parent at Timestamp, like normal payload building.
 	gen := &generateParams{
 		timestamp:   args.Timestamp,
@@ -48,5 +74,10 @@ func (miner *Miner) BuildExecutedFragment(args *BuildPayloadArgs, bucketID uint3
 
 	// Compute post root after executing the fragment txs.
 	post := env.state.IntermediateRoot(miner.chainConfig.IsEIP158(env.header.Number))
+
+	log.Debug("FRAGMENT BUILD DONE",
+		"bucket", bucketID,
+		"txs", len(env.txs),
+		"elapsed", time.Since(start),)
 	return env.txs, post, nil
 }

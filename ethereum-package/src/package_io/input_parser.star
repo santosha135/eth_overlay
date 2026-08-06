@@ -741,6 +741,7 @@ def input_parser(plan, input_args):
                 "mev_relay_website_extra_env_vars"
             ],
             mev_builder_extra_args=result["mev_params"]["mev_builder_extra_args"],
+            mev_builder_blocklist=result["mev_params"]["mev_builder_blocklist"],
             mev_builder_cl_extra_params=result["mev_params"][
                 "mev_builder_cl_extra_params"
             ],
@@ -1670,6 +1671,7 @@ def get_default_mev_params(mev_type, preset):
     mev_relay_website_extra_args = []
     mev_relay_website_extra_env_vars = {}
     mev_builder_extra_args = []
+    mev_builder_blocklist = []    
     mev_builder_cl_extra_params = []
     launch_adminer = False
     mev_builder_prometheus_config = {
@@ -1729,6 +1731,7 @@ def get_default_mev_params(mev_type, preset):
         "mev_builder_cl_image": mev_builder_cl_image,
         "mev_builder_extra_data": mev_builder_extra_data,
         "mev_builder_extra_args": mev_builder_extra_args,
+        "mev_builder_blocklist": mev_builder_blocklist,        
         "mev_builder_cl_extra_params": mev_builder_cl_extra_params,
         "mev_boost_image": mev_boost_image,
         "mev_boost_args": mev_boost_args,

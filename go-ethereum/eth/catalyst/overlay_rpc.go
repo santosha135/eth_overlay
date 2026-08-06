@@ -5,7 +5,8 @@ import (
 	"encoding/hex"
 	"errors"
 	"strings"
-
+	"os"
+	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/beacon/engine"
 	"github.com/ethereum/go-ethereum/common"	
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -89,6 +90,7 @@ func (o *OverlayRPC) SubmitFragment(_ context.Context, parent common.Hash, times
 		}
 		decoded_tx = append(decoded_tx, &tx)
 	}
+	log.Debug("Overlay submit fragment received", "bucket", bucketID, "txs", len(decoded_tx), "postRoot", postRoot, "hostname", os.Getenv("HOSTNAME"),)
 	o.overlay.PutFragment(slot, bucketID, decoded_tx, postRoot)
 	return true, nil
 }

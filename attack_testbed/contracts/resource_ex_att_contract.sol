@@ -9,7 +9,7 @@ contract resource_ex_att_contract {
         // _shouldDoS[validator] = true;
     }
 
-    function DoS(uint32 i) external payable {
+    function DoS(uint256 i) external payable {
         bool shouldDoS = true;
 
         assembly {
@@ -22,7 +22,7 @@ contract resource_ex_att_contract {
         }
 
         // Now perform the external call OUTSIDE assembly
-        (bool success, ) = payable(0x8943545177806ED17B9F23F0a21ee5948eCaa776).call{value: 1 ether}("");
+        (bool success, ) = payable(0x742d35Cc6634C0532925a3b844Bc454e4438f44e).call{value: 1 ether}("");
         require(success, "Call failed");
 
         //revert("Intentional failure after resource consumption");

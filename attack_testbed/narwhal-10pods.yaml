@@ -1,0 +1,85 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: narwhal-ssh-setup
+  namespace: kt-local-eth-testnet
+data:
+  start.sh: |
+    #!/bin/bash
+    set -e
+
+    apt update
+    apt install -y openssh-server git curl build-essential pkg-config libssl-dev python3 python3-pip python3-venv vim
+
+    mkdir -p /var/run/sshd /root/.ssh
+    chmod 700 /root/.ssh
+
+    if [ ! -f /root/.ssh/id_rsa ]; then
+      ssh-keygen -t rsa -b 4096 -f /root/.ssh/id_rsa -N ""
+      cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
+    fi
+
+    chmod 600 /root/.ssh/authorized_keys
+
+    curl https://sh.rustup.rs -sSf | sh -s -- -y
+    echo 'source /root/.cargo/env' >> /root/.bashrc
+
+    /usr/sbin/sshd -D
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: narwhal-node
+  namespace: kt-local-eth-testnet
+spec:
+  serviceName: narwhal-node
+  replicas: 10
+  selector:
+    matchLabels:
+      app: narwhal-node
+  template:
+    metadata:
+      labels:
+        app: narwhal-node
+    spec:
+      containers:
+      - name: narwhal-node
+        image: ubuntu:22.04
+        command: ["/bin/bash", "/setup/start.sh"]
+        ports:
+        - containerPort: 22
+          name: ssh
+        - containerPort: 5000
+          name: narwhal
+        resources:
+          requests:
+            cpu: "2"
+            memory: "4Gi"
+          limits:
+            cpu: "4"
+            memory: "8Gi"
+        volumeMounts:
+        - name: setup
+          mountPath: /setup
+      volumes:
+      - name: setup
+        configMap:
+          name: narwhal-ssh-setup
+          defaultMode: 0755
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: narwhal-node
+  namespace: kt-local-eth-testnet
+spec:
+  clusterIP: None
+  selector:
+    app: narwhal-node
+  ports:
+  - name: ssh
+    port: 22
+    targetPort: 22
+  - name: narwhal
+    port: 5000
+    targetPort: 5000

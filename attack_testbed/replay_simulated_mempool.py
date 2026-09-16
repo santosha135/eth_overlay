@@ -10,7 +10,7 @@ import time
 csv.field_size_limit(sys.maxsize)
 
 # ----------------- CONFIGURATION -----------------
-GETH_URL = 'http://127.0.0.1:32003'  # Update with your Geth RPC URL
+GETH_URL = 'http://127.0.0.1:37217'  # Update with your Geth RPC URL
 MASTER_PRIVATE_KEY = 'bcdf20249abf0ed6d944c0288fad489e33f66b3960d9e6229c1cd214ed3bbe31'
 PRIVATE_KEYS_FILE = 'wallet_private_keys.json'
 CSV_FILE = 'mempool.csv'

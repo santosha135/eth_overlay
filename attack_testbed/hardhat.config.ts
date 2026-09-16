@@ -32,7 +32,7 @@ export default {
   },
   networks: {
     localnet: {
-      url: 'http://127.0.0.1:32772',//TODO: REPLACE <PORT> WITH THE PORT OF A NODE URI PRODUCED BY THE ETH NETWORK KURTOSIS PACKAGE
+      url: 'http://el-01-geth-lighthouse:8545',//TODO: REPLACE <PORT> WITH THE PORT OF A NODE URI PRODUCED BY THE ETH NETWORK KURTOSIS PACKAGE
       // These are private keys associated with prefunded test accounts created by the eth-network-package
       //https://github.com/ethpandaops/ethereum-package/blob/main/src/prelaunch_data_generator/genesis_constants/genesis_constants.star
       accounts: [

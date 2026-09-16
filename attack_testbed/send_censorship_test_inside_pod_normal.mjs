@@ -2,71 +2,15 @@ import Web3 from 'web3';
 import fs from 'fs';
 import { execSync } from 'child_process';
 
-// function getKurtosisRpcUrl() {
-//   const enclaveName = process.env.KURTOSIS_ENCLAVE || 'local-eth-testnet';
-//   let output = '';
-
-//   try {
-//     output = execSync(`kurtosis enclave inspect ${enclaveName}`, {
-//       encoding: 'utf8',
-//       stdio: ['ignore', 'pipe', 'pipe'],
-//     });
-//   } catch (err) {
-//     throw new Error(
-//       `Failed to run "kurtosis enclave inspect ${enclaveName}": ${err.message}`
-//     );
-//   }
-
-//   console.log(`===== kurtosis enclave inspect ${enclaveName} =====`);
-//   console.log(output);
-//   console.log('===================================================');
-
-//   const lines = output.split('\n');
-//   let inTargetService = false;
-//   let currentService = null;
-
-//   for (const rawLine of lines) {
-//     const line = rawLine.trimEnd();
-
-//     // Match a service header line such as:
-//     // 31338bb2767c   el-1-geth-lighthouse   engine-rpc: ...
-//     const serviceMatch = line.match(/^([a-f0-9]+)\s+([^\s]+)\s+/i);
-//     if (serviceMatch) {
-//       currentService = serviceMatch[2];
-//       inTargetService = /^el-.*geth/i.test(currentService);
-//       continue;
-//     }
-
-//     // While inside the EL geth service block, find the RPC mapping
-//     if (inTargetService) {
-//       const rpcMatch = line.match(
-//         /rpc:\s*8545\/tcp\s*->\s*(?:http:\/\/)?(?:127\.0\.0\.1|localhost):(\d+)/i
-//       );
-//       if (rpcMatch) {
-//         const rpcUrl = `http://127.0.0.1:${rpcMatch[1]}`;
-//         console.log(`Matched service : ${currentService}`);
-//         console.log(`Detected RPC URL: ${rpcUrl}`);
-//         return rpcUrl;
-//       }
-//     }
-//   }
-
-//   throw new Error(
-//     `Could not auto-detect Kurtosis geth RPC port from enclave "${enclaveName}"`
-//   );
-// }
 
 
-// const rpcUrl = process.env.RPC_URL || getKurtosisRpcUrl();
-// const web3 = new Web3(new Web3.providers.HttpProvider(rpcUrl));
-
-const rpcUrl = "http://127.0.0.1:37217";
-const web3 = new Web3(new Web3.providers.HttpProvider(rpcUrl));
+ const rpcUrl = "http://el-01-geth-lighthouse:8545";
+ const web3 = new Web3(new Web3.providers.HttpProvider(rpcUrl));
 
 // Sender and recipient
-const fromAddress = "0x8943545177806ED17B9F23F0a21ee5948eCaa776";
-const toAddress = "0x614561D2d143621E126e87831AEF287678B442b8";
-const privateKey = "0xbcdf20249abf0ed6d944c0288fad489e33f66b3960d9e6229c1cd214ed3bbe31";
+const fromAddress = "0x2c57d1CFC6d5f8E4182a56b4cf75421472eBAEa4";
+const toAddress = "0xf93Ee4Cf8c6c40b329b0c0626F28333c132CF241";
+const privateKey = "7ff1a4c1d57e5e784d327c4c7651e952350bc271f156afb3d00d20f5ef924856";
 
 // Transaction config
 const valueInEther = "0.1";
@@ -142,7 +86,7 @@ async function sendTransactions() {
         "[\n    " +
         hexArray.map((v, idx) => (idx % 8 === 0 && idx !== 0 ? "\n    " : "") + v).join(", ") +
         "\n],\n";
-      fs.appendFileSync("/home/narwhal/narwhal/node/src/transactions.txt", formatted);
+      fs.appendFileSync("/root/attack_testbed/transactions.txt", formatted);
 
       const sendStartMs = Date.now();
 
@@ -277,12 +221,12 @@ async function sendTransactions() {
     console.log(`Average success latency: ${(summary.avgSuccessLatencyMs / 1000).toFixed(3)} sec`);
 
     fs.writeFileSync(
-      "/home/narwhal/narwhal/node/src/tx_summary.json",
+      "/root/attack_testbed/tx_summary.json",
       JSON.stringify(summary, null, 2)
     );
 
     console.log("\nSummary written to:");
-    console.log("/home/narwhal/narwhal/node/src/tx_summary.json");
+    console.log("/root/attack_testbed/tx_summary.json");
 
   } catch (error) {
     console.error("Error sending transactions:", error);
@@ -290,3 +234,4 @@ async function sendTransactions() {
 }
 
 sendTransactions();
+

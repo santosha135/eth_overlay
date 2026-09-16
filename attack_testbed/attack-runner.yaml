@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: attack-runner
+  namespace: kt-local-eth-testnet
+spec:
+  restartPolicy: Never
+
+  nodeSelector:
+    kubernetes.io/hostname: prism-pc-d
+
+  containers:
+  - name: attack-runner
+    image: python:3.11-bookworm
+
+    command:
+      - sleep
+      - infinity
+
+    resources:
+      requests:
+        cpu: "4"
+        memory: "8Gi"
+
+      limits:
+        cpu: "8"
+        memory: "24Gi"

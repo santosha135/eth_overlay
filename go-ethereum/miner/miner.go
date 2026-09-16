@@ -18,8 +18,10 @@
 package miner
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/big"
+	"os"
 	"sync"
 	"time"
 

@@ -17,20 +17,20 @@
 package txpool
 
 import (
-	"os"
-	"strconv"
-	"sync/atomic"
-	"time"
-	"regexp"
+	"encoding/binary"
 	"errors"
 	"fmt"
-	"math/big"
-	"sync"
-	"encoding/binary"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/src/bucket"
+	"math/big"
+	"os"
+	"regexp"
+	"strconv"
+	"sync"
+	"sync/atomic"
+	"time"
 	// "github.com/ethereum/go-ethereum/src"
-	
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/state"
@@ -38,7 +38,6 @@ import (
 	"github.com/ethereum/go-ethereum/event"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
-
 )
 
 // TxStatus is the current status of a transaction as seen by the pool.
@@ -49,7 +48,6 @@ const (
 	TxStatusQueued
 	TxStatusPending
 	TxStatusIncluded
-	
 )
 
 const futureBucketID = -1
@@ -93,9 +91,9 @@ type TxPool struct {
 	// ---- future bucket tracking (per sender) ----
 	futureMu sync.Mutex
 	// future   map[common.Address]map[uint64]*types.Transaction // sender -> nonce -> txHash
-	future map[common.Address]map[uint64]common.Hash
+	future        map[common.Address]map[uint64]common.Hash
 	futureAddTime map[common.Hash]time.Time
-		// ---- bucket config ----
+	// ---- bucket config ----
 	numBuckets     int
 	groupID        int
 	rotationBlocks uint64
@@ -111,7 +109,12 @@ type TxPool struct {
 
 	forcedActiveBucket atomic.Int64
 
+	// ============================================================
+	// Censorship / bytecode timing metrics
+	// ============================================================
 
+	policyMetricsCh   chan PolicyMetric
+	policyMetricsDone chan struct{}
 }
 
 func detectMemberIndexFromHostname() (int, bool) {
@@ -208,7 +211,34 @@ func New(gasTip uint64, chain BlockChain, subpools []SubPool) (*TxPool, error) {
 	pool.future = make(map[common.Address]map[uint64]common.Hash)
 	pool.futureAddTime = make(map[common.Hash]time.Time)
 
-		// ---- BUCKET + LEADER CONFIG (static for now) ----
+	// ============================================================
+	// Policy metrics
+	// ============================================================
+
+	metricsPath := policyMetricsPath()
+
+	if err := ensureMetricDirectory(metricsPath); err != nil {
+		log.Error(
+			"Could not create policy metrics directory",
+			"path", metricsPath,
+			"err", err,
+		)
+	} else {
+		pool.policyMetricsCh =
+			make(chan PolicyMetric, 10000)
+
+		pool.policyMetricsDone =
+			make(chan struct{})
+
+		go pool.policyMetricsWriter(metricsPath)
+
+		log.Info(
+			"Policy metrics Excel enabled",
+			"path", metricsPath,
+		)
+	}
+
+	// ---- BUCKET + LEADER CONFIG (static for now) ----
 	// pool.numBuckets = 4
 	// pool.groupID = 0              // TODO: set per node
 	// pool.rotationBlocks = 1       // rotate every N blocks (1 = every block)
@@ -224,7 +254,7 @@ func New(gasTip uint64, chain BlockChain, subpools []SubPool) (*TxPool, error) {
 	// pool.leaderGating = getenvBool("GETH_SCHED_LEADER_GATING", false)
 	// pool.groupSize = getenvInt("GETH_SCHED_GROUP_SIZE", 10)
 	// pool.myMemberIndex = getenvInt("GETH_SCHED_MEMBER_INDEX", pool.groupID)
-	pool.numBuckets = getenvInt("GETH_SCHED_NUM_BUCKETS", 15)
+	pool.numBuckets = getenvInt("GETH_SCHED_NUM_BUCKETS", 10)
 	pool.rotationBlocks = uint64(getenvInt("GETH_SCHED_ROTATION_BLOCKS", 1))
 
 	pool.leaderGating = getenvBool("GETH_SCHED_LEADER_GATING", true)
@@ -261,7 +291,7 @@ func New(gasTip uint64, chain BlockChain, subpools []SubPool) (*TxPool, error) {
 	// 	pool.groupSize = 1
 	// }
 	pool.groupID, pool.myMemberIndex, pool.groupSize =
-	bucket.BuildMinerGroupAssignment(minerIndex, totalMiners, pool.numBuckets)
+		bucket.BuildMinerGroupAssignment(minerIndex, totalMiners, pool.numBuckets)
 
 	log.Debug("Tx scheduler config",
 		"numBuckets", pool.numBuckets,
@@ -325,7 +355,7 @@ func New(gasTip uint64, chain BlockChain, subpools []SubPool) (*TxPool, error) {
 	pool.bucketIdx = newBucketIndex()
 
 	pool.forcedActiveBucket.Store(-1)
-	
+
 	// ---- ADDRESS POLICY (censorship + hard-coded address detection) ----
 	// Configure via env var GETH_CENSORSHIP_CONFIG (JSON file). If unset, defaults to ./blocked_addresses.json.
 	policyPath := os.Getenv("GETH_CENSORSHIP_CONFIG")
@@ -340,7 +370,6 @@ func New(gasTip uint64, chain BlockChain, subpools []SubPool) (*TxPool, error) {
 	} else {
 		log.Debug("Address policy disabled", "path", policyPath)
 	}
-
 
 	if head != nil {
 		pool.bucketSched.SetHeadBlock(head.Number.Uint64())
@@ -357,41 +386,77 @@ func New(gasTip uint64, chain BlockChain, subpools []SubPool) (*TxPool, error) {
 	// 	}
 	// }
 	for i, subpool := range subpools {
-	subpool.SetBucketIndex(pool.bucketIdx)
+		subpool.SetBucketIndex(pool.bucketIdx)
 
-	if err := subpool.Init(gasTip, head, reserver.NewHandle(i)); err != nil {
-		for j := i - 1; j >= 0; j-- {
-			subpools[j].Close()
+		if err := subpool.Init(gasTip, head, reserver.NewHandle(i)); err != nil {
+			for j := i - 1; j >= 0; j-- {
+				subpools[j].Close()
+			}
+			return nil, err
 		}
-		return nil, err
-	}
 	}
 	go pool.loop(head)
 	return pool, nil
 }
 
 // Close terminates the transaction pool and all its subpools.
+// func (p *TxPool) Close() error {
+// 	var errs []error
+
+// 	// Terminate the reset loop and wait for it to finish
+// 	errc := make(chan error)
+// 	p.quit <- errc
+// 	if err := <-errc; err != nil {
+// 		errs = append(errs, err)
+// 	}
+// 	// Terminate each subpool
+// 	for _, subpool := range p.subpools {
+// 		if err := subpool.Close(); err != nil {
+// 			errs = append(errs, err)
+// 		}
+// 	}
+// 	// Unsubscribe anyone still listening for tx events
+// 	p.subs.Close()
+
+//		if len(errs) > 0 {
+//			return fmt.Errorf("subpool close errors: %v", errs)
+//		}
+//		return nil
+//	}
 func (p *TxPool) Close() error {
 	var errs []error
 
-	// Terminate the reset loop and wait for it to finish
+	// Terminate reset loop
 	errc := make(chan error)
 	p.quit <- errc
 	if err := <-errc; err != nil {
 		errs = append(errs, err)
 	}
-	// Terminate each subpool
+
+	// Close subpools
 	for _, subpool := range p.subpools {
 		if err := subpool.Close(); err != nil {
 			errs = append(errs, err)
 		}
 	}
-	// Unsubscribe anyone still listening for tx events
+
 	p.subs.Close()
+
+	// ============================================================
+	// Stop policy metrics writer and flush Excel file
+	// ============================================================
+	if p.policyMetricsCh != nil {
+		close(p.policyMetricsCh)
+
+		if p.policyMetricsDone != nil {
+			<-p.policyMetricsDone
+		}
+	}
 
 	if len(errs) > 0 {
 		return fmt.Errorf("subpool close errors: %v", errs)
 	}
+
 	return nil
 }
 
@@ -474,14 +539,133 @@ func (p *TxPool) loop(head *types.Header) {
 		}
 		// Wait for the next chain head event or a previous reset finish
 		select {
+		// case event := <-newHeadCh:
+		// 	// Chain moved forward, store the head for later consumption
+		// 	newHead = event.Header
+
+		// 	if p.bucketSched != nil && newHead != nil {
+		// 		p.bucketSched.SetHeadBlock(newHead.Number.Uint64())
+		// 	}
+
 		case event := <-newHeadCh:
-			// Chain moved forward, store the head for later consumption
+
 			newHead = event.Header
 
 			if p.bucketSched != nil && newHead != nil {
-				p.bucketSched.SetHeadBlock(newHead.Number.Uint64())
-			}
 
+				blockNumber := newHead.Number.Uint64()
+
+				// ============================================================
+				// BUCKET ROTATION TIMING
+				// ============================================================
+
+				rotationStart := time.Now()
+
+				p.bucketSched.SetHeadBlock(blockNumber)
+
+				epoch := p.bucketSched.Epoch()
+				activeBucket := p.bucketSched.ActiveBucket()
+
+				rotationDuration := time.Since(rotationStart)
+
+				// ============================================================
+				// LEADER SELECTION TIMING
+				// ============================================================
+
+				leaderStart := time.Now()
+
+				leaderIndex := bucket.LeaderIndex(
+					epoch,
+					p.groupID,
+					p.groupSize,
+				)
+
+				isLeader := p.myMemberIndex == leaderIndex
+
+				leaderDuration := time.Since(leaderStart)
+
+				// ============================================================
+				// SAVE LEADER SELECTION TO EXCEL
+				// ============================================================
+
+				p.recordLeaderSelectionMetric(
+					LeaderSelectionMetric{
+						TimestampUTC: time.Now().
+							UTC().
+							Format(time.RFC3339Nano),
+
+						Epoch:        epoch,
+						ActiveBucket: activeBucket,
+
+						GroupID:   p.groupID,
+						GroupSize: p.groupSize,
+
+						LeaderIndex: leaderIndex,
+						MemberIndex: p.myMemberIndex,
+
+						IsLeader: isLeader,
+
+						DurationNs: leaderDuration.Nanoseconds(),
+						DurationUs: leaderDuration.Microseconds(),
+					},
+				)
+
+				// ============================================================
+				// LOG
+				// ============================================================
+
+				log.Info(
+					"SCHEDULER TIMING",
+					"block", blockNumber,
+					"epoch", epoch,
+					"groupID", p.groupID,
+					"activeBucket", activeBucket,
+					"groupSize", p.groupSize,
+					"leaderIndex", leaderIndex,
+					"memberIndex", p.myMemberIndex,
+					"isLeader", isLeader,
+					"rotationDurationNs",
+					rotationDuration.Nanoseconds(),
+					"rotationDurationUs",
+					rotationDuration.Microseconds(),
+					"leaderSelectionDurationNs",
+					leaderDuration.Nanoseconds(),
+					"leaderSelectionDurationUs",
+					leaderDuration.Microseconds(),
+				)
+
+				// ============================================================
+				// FILE METRIC
+				// ============================================================
+
+				p.recordSchedulerMetric(
+					SchedulerMetric{
+						TimestampUTC: time.Now().
+							UTC().
+							Format(time.RFC3339Nano),
+
+						BlockNumber: blockNumber,
+						Epoch:       epoch,
+
+						GroupID:     p.groupID,
+						MemberIndex: p.myMemberIndex,
+						GroupSize:   p.groupSize,
+
+						ActiveBucket: activeBucket,
+
+						LeaderIndex: leaderIndex,
+						IsLeader:    isLeader,
+
+						RotationDurationNs: rotationDuration.Nanoseconds(),
+
+						RotationDurationUs: rotationDuration.Microseconds(),
+
+						LeaderDurationNs: leaderDuration.Nanoseconds(),
+
+						LeaderDurationUs: leaderDuration.Microseconds(),
+					},
+				)
+			}
 
 		case head := <-resetDone:
 			// Previous reset finished, update the old head and allow a new reset
@@ -494,7 +678,7 @@ func (p *TxPool) loop(head *types.Header) {
 
 			// Block imported / head changed: nonce may have advanced, so promote future txs
 			p.promoteAllFuture()
-			
+
 			// If someone is waiting for a reset to finish, notify them, unless
 			// the forced op is still pending. In that case, wait another round
 			// of resets.
@@ -576,46 +760,131 @@ func (p *TxPool) GetMetadata(hash common.Hash) *TxMetadata {
 // - reject if tx.To is blocked directly
 // - if contract creation: scan initcode
 // - if calling an existing contract: scan the deployed runtime bytecode from state
-func (p *TxPool) checkAddressPolicy(tx *types.Transaction) error {
+// func (p *TxPool) checkAddressPolicy(tx *types.Transaction) error {
+// 	pol := GetAddressPolicy()
+// 	if pol == nil || !pol.Enabled {
+// 		return nil
+// 	}
+
+// 	// Contract creation: tx.To() == nil → scan initcode (tx.Data)
+// 	to := tx.To()
+// 	if to == nil {
+// 		return pol.CheckTxAdmission(nil, tx.Data())
+// 	}
+
+// 	// 1) Direct censorship: tx.To is blocked
+// 	if _, blocked := pol.BlockedMap[*to]; blocked {
+// 		return fmt.Errorf("rejected: tx.To is blocked %s", to.Hex())
+// 	}
+
+// 	// 2) If it's a contract call, scan deployed runtime bytecode from current head state
+// 	// p.stateLock.RLock()
+// 	// code := p.state.GetCode(*to)
+// 	// p.stateLock.RUnlock()
+// 	p.stateLock.Lock()
+// 	code := p.state.GetCode(*to)
+// 	p.stateLock.Unlock()
+
+// 	// log.Debug("Scanning contract runtime bytecode",
+//     // "contract", to.Hex(),
+//     // "codeSize", len(code))
+
+// 	// If code length is 0, it's an EOA (not a contract), nothing to scan
+// 	if len(code) == 0 {
+// 		return nil
+// 	}
+
+//		log.Debug("Scanning contract runtime bytecode",
+//			"contract", to.Hex(),
+//			"codeSize", len(code),
+//		)
+//		// Scan runtime bytecode for PUSH20 hard-coded addresses
+//		return pol.CheckBytecodeBlocked(code)
+//	}
+type PolicyCheckResult struct {
+	CheckType        string
+	CodeSize         int
+	BytecodeStart    time.Time
+	BytecodeEnd      time.Time
+	BytecodeDuration time.Duration
+}
+
+func (p *TxPool) checkAddressPolicy(tx *types.Transaction) (PolicyCheckResult, error) {
+	var result PolicyCheckResult
+
 	pol := GetAddressPolicy()
 	if pol == nil || !pol.Enabled {
-		return nil
+		result.CheckType = "policy_disabled"
+		return result, nil
 	}
 
-	// Contract creation: tx.To() == nil → scan initcode (tx.Data)
 	to := tx.To()
+
+	// ============================================================
+	// Contract creation
+	// ============================================================
 	if to == nil {
-		return pol.CheckTxAdmission(nil, tx.Data())
+		result.CheckType = "contract_initcode"
+		result.CodeSize = len(tx.Data())
+
+		result.BytecodeStart = time.Now()
+
+		err := pol.CheckTxAdmission(nil, tx.Data())
+
+		result.BytecodeEnd = time.Now()
+		result.BytecodeDuration =
+			result.BytecodeEnd.Sub(result.BytecodeStart)
+
+		return result, err
 	}
 
-	// 1) Direct censorship: tx.To is blocked
+	// ============================================================
+	// Direct blocked-address check
+	// ============================================================
 	if _, blocked := pol.BlockedMap[*to]; blocked {
-		return fmt.Errorf("rejected: tx.To is blocked %s", to.Hex())
+		result.CheckType = "direct_blocked_address"
+
+		return result, fmt.Errorf(
+			"rejected: tx.To is blocked %s",
+			to.Hex(),
+		)
 	}
 
-	// 2) If it's a contract call, scan deployed runtime bytecode from current head state
-	// p.stateLock.RLock()
-	// code := p.state.GetCode(*to)
-	// p.stateLock.RUnlock()
+	// ============================================================
+	// Get deployed runtime bytecode
+	// ============================================================
 	p.stateLock.Lock()
 	code := p.state.GetCode(*to)
 	p.stateLock.Unlock()
 
-	// log.Debug("Scanning contract runtime bytecode",
-    // "contract", to.Hex(),
-    // "codeSize", len(code))
-	
-	// If code length is 0, it's an EOA (not a contract), nothing to scan
+	result.CodeSize = len(code)
+
+	// EOA: nothing to scan
 	if len(code) == 0 {
-		return nil
+		result.CheckType = "EOA_no_bytecode"
+		return result, nil
 	}
 
-	log.Debug("Scanning contract runtime bytecode",
+	result.CheckType = "runtime_bytecode"
+
+	log.Debug(
+		"Scanning contract runtime bytecode",
 		"contract", to.Hex(),
 		"codeSize", len(code),
 	)
-	// Scan runtime bytecode for PUSH20 hard-coded addresses
-	return pol.CheckBytecodeBlocked(code)
+
+	// ============================================================
+	// THIS measures only bytecode scanning
+	// ============================================================
+	result.BytecodeStart = time.Now()
+
+	err := pol.CheckBytecodeBlocked(code)
+
+	result.BytecodeEnd = time.Now()
+	result.BytecodeDuration =
+		result.BytecodeEnd.Sub(result.BytecodeStart)
+
+	return result, err
 }
 
 // Add enqueues a batch of transactions into the pool if they are valid. Due
@@ -632,7 +901,6 @@ func (p *TxPool) Add(txs []*types.Transaction, sync bool) []error {
 	// We also need to track how the transactions were split across the subpools,
 	// so we can piece back the returned errors into the original order.
 	log.Debug("Adding transactions to pool", "count", len(txs))
-	
 
 	// example policy (you should load these from config/flags)
 	// policy := AddressPolicy{
@@ -650,7 +918,6 @@ func (p *TxPool) Add(txs []*types.Transaction, sync bool) []error {
 	localNext := make(map[common.Address]uint64, 128)
 	seenSender := make(map[common.Address]bool, 128)
 	sendersTouched := make(map[common.Address]struct{}, 128)
-
 
 	for i, tx := range txs {
 
@@ -691,15 +958,124 @@ func (p *TxPool) Add(txs []*types.Transaction, sync bool) []error {
 		// 	}
 		// }
 
-	
+		// if err := p.checkAddressPolicy(tx); err != nil {
+		// 	splits[i] = -2
+		// 	preErr[i] = err
+		// 	log.Error("Rejecting tx in txpool by address policy",
+		// 		"hash", tx.Hash(),
+		// 		"err", err,
+		// 	)
+		// 	continue
+		// }
+		// ============================================================
+		// ADDRESS POLICY / BYTECODE CENSORSHIP TIMING
+		// ============================================================
 
-		if err := p.checkAddressPolicy(tx); err != nil {
+		policyStart := time.Now()
+
+		checkResult, policyErr := p.checkAddressPolicy(tx)
+
+		policyEnd := time.Now()
+		policyDuration := policyEnd.Sub(policyStart)
+
+		status := "POLICY_ACCEPTED"
+		reason := ""
+
+		if policyErr != nil {
+			status = "CENSORED_REJECTED"
+			reason = policyErr.Error()
+		}
+
+		// Record metric asynchronously
+		// p.recordPolicyMetric(PolicyMetric{
+		// 	TxHash: tx.Hash().Hex(),
+
+		// 	StartTimeUTC: policyStart.UTC(),
+		// 	EndTimeUTC:   policyEnd.UTC(),
+
+		// 	TotalPolicyDuration: policyDuration,
+
+		// 	BytecodeStart:    checkResult.BytecodeStart,
+		// 	BytecodeEnd:      checkResult.BytecodeEnd,
+		// 	BytecodeDuration: checkResult.BytecodeDuration,
+
+		// 	CodeSize:  checkResult.CodeSize,
+		// 	CheckType: checkResult.CheckType,
+
+		// 	Status: status,
+		// 	Reason: reason,
+		// })
+
+		txTo := ""
+		operationType := ""
+
+		if tx.To() == nil {
+			operationType = "CONTRACT_DEPLOYMENT"
+		} else {
+			txTo = tx.To().Hex()
+
+			switch checkResult.CheckType {
+			case "runtime_bytecode":
+				operationType = "CONTRACT_INTERACTION"
+
+			case "direct_blocked_address":
+				operationType = "DIRECT_BLOCKED_ADDRESS"
+
+			case "EOA_no_bytecode":
+				operationType = "EOA_TRANSACTION"
+
+			default:
+				operationType = "OTHER_TRANSACTION"
+			}
+		}
+
+		p.recordPolicyMetric(PolicyMetric{
+			TxHash: tx.Hash().Hex(),
+
+			StartTimeUTC: policyStart.UTC(),
+			EndTimeUTC:   policyEnd.UTC(),
+
+			TotalPolicyDuration: policyDuration,
+
+			BytecodeStart:    checkResult.BytecodeStart,
+			BytecodeEnd:      checkResult.BytecodeEnd,
+			BytecodeDuration: checkResult.BytecodeDuration,
+
+			CodeSize: checkResult.CodeSize,
+
+			TxTo:          txTo,
+			OperationType: operationType,
+
+			CheckType: checkResult.CheckType,
+			Status:    status,
+			Reason:    reason,
+		})
+
+		log.Info(
+			"Transaction censorship check",
+			"hash", tx.Hash(),
+			"checkType", checkResult.CheckType,
+			"codeSize", checkResult.CodeSize,
+			"policyDurationUs", policyDuration.Microseconds(),
+			"bytecodeDurationUs", checkResult.BytecodeDuration.Microseconds(),
+			"status", status,
+			"reason", reason,
+		)
+
+		// Reject it
+		if policyErr != nil {
 			splits[i] = -2
-			preErr[i] = err
-			log.Error("Rejecting tx in txpool by address policy",
+			preErr[i] = policyErr
+
+			log.Warn(
+				"Rejecting tx in txpool by address policy",
 				"hash", tx.Hash(),
-				"err", err,
+				"policyDurationUs", policyDuration.Microseconds(),
+				"bytecodeDurationUs",
+				checkResult.BytecodeDuration.Microseconds(),
+				"err", policyErr,
 			)
+
 			continue
 		}
 
@@ -715,7 +1091,7 @@ func (p *TxPool) Add(txs []*types.Transaction, sync bool) []error {
 			}
 		}
 
-		//new bucket code 
+		//new bucket code
 		// Index bucket mapping only if tx was assigned to some subpool
 		// if splits[i] != -1 && p.bucketIdx != nil && p.numBuckets > 0 {
 		// 		h := tx.Hash()
@@ -727,79 +1103,79 @@ func (p *TxPool) Add(txs []*types.Transaction, sync bool) []error {
 		// ---- sender-bucket + future-bucket assignment ----
 
 		if splits[i] != -1 && p.bucketIdx != nil && p.numBuckets > 0 {
-		p.senderMu.Lock()
-		head := p.chain.CurrentBlock()
-		signer := types.MakeSigner(p.chain.Config(), head.Number, head.Time)
-		from, err := types.Sender(signer, tx)
-		p.senderMu.Unlock()
+			p.senderMu.Lock()
+			head := p.chain.CurrentBlock()
+			signer := types.MakeSigner(p.chain.Config(), head.Number, head.Time)
+			from, err := types.Sender(signer, tx)
+			p.senderMu.Unlock()
 
-		if err != nil {
+			if err != nil {
+				h := tx.Hash()
+				if _, ok := p.bucketIdx.get(h); ok {
+					continue
+				}
+				bid := bucket.BucketForHash(h, p.numBuckets)
+				p.bucketIdx.set(h, bid)
+				continue
+			}
+
+			sendersTouched[from] = struct{}{}
 			h := tx.Hash()
+
 			if _, ok := p.bucketIdx.get(h); ok {
 				continue
 			}
-			bid := bucket.BucketForHash(h, p.numBuckets)
-			p.bucketIdx.set(h, bid)
-			continue
-		}
 
-		sendersTouched[from] = struct{}{}
-		h := tx.Hash()
+			expected := localNext[from]
+			if !seenSender[from] {
+				expected = p.PoolNonce(from)
+				localNext[from] = expected
+				seenSender[from] = true
+			}
+			// if expected == 0 && !seenSender[from] {
+			// 	expected = p.PoolNonce(from)
+			// 	if expected == 0 {
+			// 		expected = p.Nonce(from)
+			// 	}
+			// 	localNext[from] = expected
+			// 	seenSender[from] = true
+			// }
 
-		if _, ok := p.bucketIdx.get(h); ok {
-			continue
-		}
+			n := tx.Nonce()
 
-		expected := localNext[from]
-		if !seenSender[from] {
-			expected = p.PoolNonce(from)
-			localNext[from] = expected
-			seenSender[from] = true
-		}
-		// if expected == 0 && !seenSender[from] {
-		// 	expected = p.PoolNonce(from)
-		// 	if expected == 0 {
-		// 		expected = p.Nonce(from)
-		// 	}
-		// 	localNext[from] = expected
-		// 	seenSender[from] = true
-		// }
+			if n > expected {
+				p.bucketIdx.set(h, futureBucketID)
+				p.trackFuture(from, n, h)
 
-		n := tx.Nonce()
+				ts := time.Now()
+				p.futureMu.Lock()
+				p.futureAddTime[h] = ts
+				p.futureMu.Unlock()
 
-		if n > expected {
-			p.bucketIdx.set(h, futureBucketID)
-			p.trackFuture(from, n, h)
+				log.Debug("Assigned tx to FUTURE bucket",
+					"from", from,
+					"hash", h,
+					"nonce", n,
+					"expected", expected,
+					"ts", ts,
+				)
+			} else {
+				bid := bucket.BucketForHash(h, p.numBuckets)
+				p.bucketIdx.set(h, bid)
 
-			ts := time.Now()
-			p.futureMu.Lock()
-			p.futureAddTime[h] = ts
-			p.futureMu.Unlock()
+				log.Debug("Assigned tx to NORMAL bucket",
+					"from", from,
+					"hash", h,
+					"bucketID", bid,
+					"nonce", n,
+					"expected", expected,
+				)
 
-			log.Debug("Assigned tx to FUTURE bucket",
-				"from", from,
-				"hash", h,
-				"nonce", n,
-				"expected", expected,
-				"ts", ts,
-			)
-		} else {
-			bid := bucket.BucketForHash(h, p.numBuckets)
-			p.bucketIdx.set(h, bid)
-
-			log.Debug("Assigned tx to NORMAL bucket",
-				"from", from,
-				"hash", h,
-				"bucketID", bid,
-				"nonce", n,
-				"expected", expected,
-			)
-
-			if n == expected {
-				localNext[from] = expected + 1
+				if n == expected {
+					localNext[from] = expected + 1
+				}
 			}
 		}
-	}
 		// if splits[i] != -1 && p.bucketIdx != nil && p.numBuckets > 0 {
 
 		// 	// Recover sender
@@ -958,7 +1334,6 @@ func (p *TxPool) Nonce(addr common.Address) uint64 {
 	// defer p.stateLock.RUnlock()
 	defer p.stateLock.Unlock()
 
-
 	return p.state.GetNonce(addr)
 }
 
@@ -995,13 +1370,13 @@ func (p *TxPool) trackFuture(from common.Address, nonce uint64, hash common.Hash
 // 	p.futureMu.Lock()
 // 	defer p.futureMu.Unlock()
 
-// 	m := p.future[from]
-// 	if m == nil {
-// 		m = make(map[uint64]*types.Transaction)
-// 		p.future[from] = m
-// 	}
-// 	m[nonce] = tx
-// }
+//		m := p.future[from]
+//		if m == nil {
+//			m = make(map[uint64]*types.Transaction)
+//			p.future[from] = m
+//		}
+//		m[nonce] = tx
+//	}
 func (p *TxPool) untrackFuture(from common.Address, nonce uint64) {
 	p.futureMu.Lock()
 	defer p.futureMu.Unlock()
@@ -1015,6 +1390,7 @@ func (p *TxPool) untrackFuture(from common.Address, nonce uint64) {
 		delete(p.future, from)
 	}
 }
+
 // promoteFutureIfReady moves any future txs whose nonce has become "next" into normal sender bucket.
 // NOTE: This only updates the bucket index mapping; actual tx execution status is handled by subpools.
 func (p *TxPool) promoteFutureIfReady(from common.Address) {
@@ -1057,7 +1433,7 @@ func (p *TxPool) promoteFutureIfReady(from common.Address) {
 		}
 
 		//TODO: implement overdraft solution
-		
+
 		// Promote bucket mapping: future -> normal sender bucket
 		// bid := p.bucketForSender(from)
 		bid := bucket.BucketForHash(h, p.numBuckets)

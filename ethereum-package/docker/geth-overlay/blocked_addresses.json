@@ -3,7 +3,7 @@
   "reject_any_hardcoded": false,
   "reject_zero_address": false,
   "blocked": [
-    "0x8e76be392dd23911f3f403e82b24d3a660761fb1"
+    "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
   ],
   "allow_hardcoded": []
 }

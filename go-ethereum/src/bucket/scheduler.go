@@ -116,7 +116,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-const DefaultNumBuckets = 15
+const DefaultNumBuckets = 10
 
 type Scheduler struct {
 	numBuckets     uint64

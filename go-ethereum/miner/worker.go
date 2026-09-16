@@ -121,202 +121,1047 @@ type generateParams struct {
     numBuckets  uint32	
 }
 
-func (miner *Miner) applyVerifiedFragments(env *environment, fp FragmentProvider, numBuckets uint32) {
+// func (miner *Miner) applyVerifiedFragments(env *environment, fp FragmentProvider, numBuckets uint32) {
 
-	// // Ensure gas pool exists
-	// if env.gasPool == nil {
-	// 	env.gasPool = new(core.GasPool).AddGas(env.header.GasLimit)
+// 	// // Ensure gas pool exists
+// 	// if env.gasPool == nil {
+// 	// 	env.gasPool = new(core.GasPool).AddGas(env.header.GasLimit)
+// 	// }
+
+// 	// for bucket := uint32(0); bucket < numBuckets; bucket++ {
+// 	// 	txs, wantRoot, ok := fp.GetFragment(bucket)
+// 	// 	if !ok || len(txs) == 0 {
+// 	// 		continue
+// 	// 	}
+
+// 	// 	// Snapshot so we can rollback only this fragment if it fails.
+// 	// 	snap := env.state.Snapshot()
+// 	// 	gp := env.gasPool.Gas()
+
+// 	// 	okFrag := true
+// 	// 	for _, tx := range txs {
+// 	// 		if tx == nil {
+// 	// 			continue
+// 	// 		}
+// 	// 		// obey block size cap
+// 	// 		if !env.txFitsSize(tx) {
+// 	// 			okFrag = false
+// 	// 			break
+// 	// 		}
+// 	// 		// set tx context and execute
+// 	// 		env.state.SetTxContext(tx.Hash(), env.tcount)
+// 	// 		if err := miner.commitTransaction(env, tx); err != nil {
+// 	// 			okFrag = false
+// 	// 			break
+// 	// 		}
+// 	// 	}
+
+// 	// 	if okFrag {
+// 	// 		// Compare resulting state root against fragment claim.
+// 	// 		// This matches how StateDB root is computed under EIP-158 rules.
+// 	// 		got := env.state.IntermediateRoot(miner.chainConfig.IsEIP158(env.header.Number))
+// 	// 		if got != wantRoot {
+// 	// 			okFrag = false
+// 	// 		}
+// 	// 	}
+
+// 	// 	if !okFrag {
+// 	// 		env.state.RevertToSnapshot(snap)
+// 	// 		env.gasPool.SetGas(gp)
+// 	// 		// fallback: do nothing; txpool fill will cover the gap
+// 	// 		continue
+// 	// 	}
+// 	// }
+// 	if env.gasPool == nil {
+// 		env.gasPool = new(core.GasPool).AddGas(env.header.GasLimit)
+// 	}
+
+// 	log.Debug("Overlay merge: start", "numBuckets", numBuckets)
+
+// 	for bucket := uint32(0); bucket < numBuckets; bucket++ {
+// 		txs, wantRoot, ok := fp.GetFragment(bucket)
+
+// 		log.Debug("Overlay merge: bucket check", "bucket", bucket, "ok", ok, "txs", len(txs), "wantRoot", wantRoot)
+
+// 		if !ok || len(txs) == 0 {
+// 			continue
+// 		}
+		
+// 		log.Debug("Overlay merge: applying fragment", "bucket", bucket, "txs", len(txs))
+
+
+// 		snap := env.state.Snapshot()
+// 		gp := env.gasPool.Gas()
+
+// 		okFrag := true
+// 		for _, tx := range txs {
+// 			if tx == nil {
+// 				continue
+// 			}
+// 			if !env.txFitsSize(tx) {
+// 				okFrag = false
+// 				break
+// 			}
+
+// 			// ---- ADDRESS POLICY CHECK: REQUIRED HERE TOO ----
+// 			if pol := txpool.GetAddressPolicy(); pol != nil && pol.Enabled {
+// 				if to := tx.To(); to == nil {
+// 					// contract creation: scan initcode
+// 					if err := pol.CheckTxAdmission(nil, tx.Data()); err != nil {
+// 						log.Debug("Rejecting fragment tx by address policy (creation/initcode)",
+// 							"hash", tx.Hash(), "err", err)
+// 						okFrag = false
+// 						break
+// 					}
+// 				} else {
+// 					// existing contract call: scan deployed runtime code
+// 					if err := pol.CheckCallTargetRuntime(env.state, *to); err != nil {
+// 						log.Debug("Rejecting fragment tx by address policy (runtime bytecode)",
+// 							"hash", tx.Hash(), "to", *to, "err", err)
+// 						okFrag = false
+// 						break
+// 					}
+// 				}
+// 			}
+
+// 			env.state.SetTxContext(tx.Hash(), env.tcount)
+// 			if err := miner.commitTransaction(env, tx); err != nil {
+// 				okFrag = false
+// 				break
+// 			}
+// 		}
+
+// 		if okFrag {
+// 			gotRoot := env.state.IntermediateRoot(miner.chainConfig.IsEIP158(env.header.Number))
+// 			if gotRoot != wantRoot {
+// 				okFrag = false
+// 			}
+// 		}
+
+// 		if !okFrag {
+// 			env.state.RevertToSnapshot(snap)
+// 			env.gasPool.SetGas(gp)
+// 		}
+// 	}
+// }
+func (miner *Miner) applyVerifiedFragments(
+	env *environment,
+	fp FragmentProvider,
+	numBuckets uint32,
+) (
+	receivedFragments int,
+	totalTransactions int,
+	collectionDuration time.Duration,
+	mergeDuration time.Duration,
+) {
+
+	if env.gasPool == nil {
+		env.gasPool =
+			new(core.GasPool).AddGas(env.header.GasLimit)
+	}
+
+	log.Info(
+		"FINAL VALIDATOR FRAGMENT PROCESSING START",
+		"numBuckets", numBuckets,
+		"block", env.header.Number,
+	)
+
+	// ============================================================
+	// 1. FRAGMENT COLLECTION TIMING
+	// ============================================================
+
+	// collectionStart := time.Now()
+
+	// type collectedFragment struct {
+	// 	bucket   uint32
+	// 	txs      []*types.Transaction
+	// 	wantRoot common.Hash
 	// }
 
+	// fragments :=
+	// 	make([]collectedFragment, 0, numBuckets)
+
 	// for bucket := uint32(0); bucket < numBuckets; bucket++ {
-	// 	txs, wantRoot, ok := fp.GetFragment(bucket)
+
+	// 	fragmentLookupStart := time.Now()
+
+	// 	txs, wantRoot, ok :=
+	// 		fp.GetFragment(bucket)
+
+	// 	fragmentLookupDuration :=
+	// 		time.Since(fragmentLookupStart)
+
+	// 	log.Info(
+	// 		"FINAL VALIDATOR FRAGMENT LOOKUP",
+	// 		"bucket", bucket,
+	// 		"available", ok,
+	// 		"txs", len(txs),
+	// 		"lookupDurationNs",
+	// 		fragmentLookupDuration.Nanoseconds(),
+	// 		"lookupDurationUs",
+	// 		fragmentLookupDuration.Microseconds(),
+	// 	)
+
 	// 	if !ok || len(txs) == 0 {
 	// 		continue
 	// 	}
 
-	// 	// Snapshot so we can rollback only this fragment if it fails.
-	// 	snap := env.state.Snapshot()
-	// 	gp := env.gasPool.Gas()
+	// 	receivedFragments++
+	// 	totalTransactions += len(txs)
 
-	// 	okFrag := true
-	// 	for _, tx := range txs {
-	// 		if tx == nil {
-	// 			continue
-	// 		}
-	// 		// obey block size cap
-	// 		if !env.txFitsSize(tx) {
-	// 			okFrag = false
-	// 			break
-	// 		}
-	// 		// set tx context and execute
-	// 		env.state.SetTxContext(tx.Hash(), env.tcount)
-	// 		if err := miner.commitTransaction(env, tx); err != nil {
-	// 			okFrag = false
-	// 			break
-	// 		}
-	// 	}
-
-	// 	if okFrag {
-	// 		// Compare resulting state root against fragment claim.
-	// 		// This matches how StateDB root is computed under EIP-158 rules.
-	// 		got := env.state.IntermediateRoot(miner.chainConfig.IsEIP158(env.header.Number))
-	// 		if got != wantRoot {
-	// 			okFrag = false
-	// 		}
-	// 	}
-
-	// 	if !okFrag {
-	// 		env.state.RevertToSnapshot(snap)
-	// 		env.gasPool.SetGas(gp)
-	// 		// fallback: do nothing; txpool fill will cover the gap
-	// 		continue
-	// 	}
+	// 	fragments = append(
+	// 		fragments,
+	// 		collectedFragment{
+	// 			bucket:   bucket,
+	// 			txs:      txs,
+	// 			wantRoot: wantRoot,
+	// 		},
+	// 	)
 	// }
-	if env.gasPool == nil {
-		env.gasPool = new(core.GasPool).AddGas(env.header.GasLimit)
+
+	// collectionDuration =
+	// 	time.Since(collectionStart)
+
+	// log.Info(
+	// 	"FINAL VALIDATOR FRAGMENT COLLECTION COMPLETE",
+	// 	"expectedFragments", numBuckets,
+	// 	"receivedFragments", receivedFragments,
+	// 	"totalTransactions", totalTransactions,
+	// 	"collectionDurationNs",
+	// 	collectionDuration.Nanoseconds(),
+	// 	"collectionDurationUs",
+	// 	collectionDuration.Microseconds(),
+	// )
+	// ============================================================
+	// 1. FRAGMENT RETRIEVAL / LOOKUP TIMING
+	// ============================================================
+
+	collectionDuration = 0
+
+	type collectedFragment struct {
+		bucket   uint32
+		txs      []*types.Transaction
+		wantRoot common.Hash
 	}
 
-	log.Debug("Overlay merge: start", "numBuckets", numBuckets)
+	fragments :=
+		make([]collectedFragment, 0, numBuckets)
 
 	for bucket := uint32(0); bucket < numBuckets; bucket++ {
-		txs, wantRoot, ok := fp.GetFragment(bucket)
 
-		log.Debug("Overlay merge: bucket check", "bucket", bucket, "ok", ok, "txs", len(txs), "wantRoot", wantRoot)
+		fragmentLookupStart := time.Now()
+
+		txs, wantRoot, ok :=
+			fp.GetFragment(bucket)
+
+		fragmentLookupDuration :=
+			time.Since(fragmentLookupStart)
+
+		// Pure GetFragment lookup time.
+		collectionDuration += fragmentLookupDuration
+
+		log.Info(
+			"FINAL VALIDATOR FRAGMENT LOOKUP",
+			"bucket", bucket,
+			"available", ok,
+			"txs", len(txs),
+			"lookupDurationNs",
+			fragmentLookupDuration.Nanoseconds(),
+			"lookupDurationUs",
+			fragmentLookupDuration.Microseconds(),
+		)
 
 		if !ok || len(txs) == 0 {
 			continue
 		}
-		
-		log.Debug("Overlay merge: applying fragment", "bucket", bucket, "txs", len(txs))
 
+		receivedFragments++
+		totalTransactions += len(txs)
+
+		fragments = append(
+			fragments,
+			collectedFragment{
+				bucket:   bucket,
+				txs:      txs,
+				wantRoot: wantRoot,
+			},
+		)
+	}
+
+	log.Info(
+		"FINAL VALIDATOR FRAGMENT COLLECTION COMPLETE",
+		"expectedFragments", numBuckets,
+		"receivedFragments", receivedFragments,
+		"totalTransactions", totalTransactions,
+		"collectionDurationNs",
+		collectionDuration.Nanoseconds(),
+		"collectionDurationUs",
+		collectionDuration.Microseconds(),
+	)
+
+	// ============================================================
+	// 2. FRAGMENT MERGE / VERIFY / EXECUTION TIMING
+	// ============================================================
+
+	// ============================================================
+	// 2. FRAGMENT VERIFY / EXECUTE / MERGE TIMING
+	// ============================================================
+
+	mergeDuration = 0
+
+	acceptedFragments := 0
+	rejectedFragments := 0
+
+	for _, fragment := range fragments {
+
+		bucketStart := time.Now()
+
+		log.Debug(
+			"Overlay merge: applying fragment",
+			"bucket", fragment.bucket,
+			"txs", len(fragment.txs),
+		)
 
 		snap := env.state.Snapshot()
 		gp := env.gasPool.Gas()
 
 		okFrag := true
-		for _, tx := range txs {
+
+		for _, tx := range fragment.txs {
+
 			if tx == nil {
 				continue
 			}
+
 			if !env.txFitsSize(tx) {
 				okFrag = false
+
+				log.Debug(
+					"Fragment rejected: block size limit",
+					"bucket", fragment.bucket,
+					"hash", tx.Hash(),
+				)
+
 				break
 			}
 
-			// ---- ADDRESS POLICY CHECK: REQUIRED HERE TOO ----
-			if pol := txpool.GetAddressPolicy(); pol != nil && pol.Enabled {
+			// Address-policy verification.
+			if pol := txpool.GetAddressPolicy();
+				pol != nil && pol.Enabled {
+
 				if to := tx.To(); to == nil {
-					// contract creation: scan initcode
-					if err := pol.CheckTxAdmission(nil, tx.Data()); err != nil {
-						log.Debug("Rejecting fragment tx by address policy (creation/initcode)",
-							"hash", tx.Hash(), "err", err)
+
+					if err :=
+						pol.CheckTxAdmission(
+							nil,
+							tx.Data(),
+						); err != nil {
+
+						log.Debug(
+							"Rejecting fragment tx by address policy",
+							"bucket", fragment.bucket,
+							"hash", tx.Hash(),
+							"err", err,
+						)
+
 						okFrag = false
 						break
 					}
+
 				} else {
-					// existing contract call: scan deployed runtime code
-					if err := pol.CheckCallTargetRuntime(env.state, *to); err != nil {
-						log.Debug("Rejecting fragment tx by address policy (runtime bytecode)",
-							"hash", tx.Hash(), "to", *to, "err", err)
+
+					if err :=
+						pol.CheckCallTargetRuntime(
+							env.state,
+							*to,
+						); err != nil {
+
+						log.Debug(
+							"Rejecting fragment tx by address policy",
+							"bucket", fragment.bucket,
+							"hash", tx.Hash(),
+							"to", *to,
+							"err", err,
+						)
+
 						okFrag = false
 						break
 					}
 				}
 			}
 
-			env.state.SetTxContext(tx.Hash(), env.tcount)
-			if err := miner.commitTransaction(env, tx); err != nil {
+			env.state.SetTxContext(
+				tx.Hash(),
+				env.tcount,
+			)
+
+			if err :=
+				miner.commitTransaction(
+					env,
+					tx,
+				); err != nil {
+
+				log.Debug(
+					"Fragment transaction execution failed",
+					"bucket", fragment.bucket,
+					"hash", tx.Hash(),
+					"err", err,
+				)
+
 				okFrag = false
 				break
 			}
 		}
 
+		// Verify fragment state root.
 		if okFrag {
-			gotRoot := env.state.IntermediateRoot(miner.chainConfig.IsEIP158(env.header.Number))
-			if gotRoot != wantRoot {
+
+			gotRoot :=
+				env.state.IntermediateRoot(
+					miner.chainConfig.IsEIP158(
+						env.header.Number,
+					),
+				)
+
+			if gotRoot != fragment.wantRoot {
+
+				log.Debug(
+					"Fragment root mismatch",
+					"bucket", fragment.bucket,
+					"wantRoot", fragment.wantRoot,
+					"gotRoot", gotRoot,
+				)
+
 				okFrag = false
 			}
 		}
 
 		if !okFrag {
+
 			env.state.RevertToSnapshot(snap)
 			env.gasPool.SetGas(gp)
+
+			rejectedFragments++
+
+		} else {
+
+			acceptedFragments++
 		}
+
+		bucketDuration :=
+			time.Since(bucketStart)
+
+		// Pure fragment processing time.
+		mergeDuration += bucketDuration
+
+		log.Info(
+			"FINAL VALIDATOR FRAGMENT APPLY",
+			"bucket", fragment.bucket,
+			"txs", len(fragment.txs),
+			"accepted", okFrag,
+			"durationNs",
+			bucketDuration.Nanoseconds(),
+			"durationUs",
+			bucketDuration.Microseconds(),
+		)
 	}
+
+	log.Info(
+		"FINAL VALIDATOR FRAGMENT MERGE COMPLETE",
+		"receivedFragments", receivedFragments,
+		"acceptedFragments", acceptedFragments,
+		"rejectedFragments", rejectedFragments,
+		"totalTransactions", totalTransactions,
+		"mergeDurationNs",
+		mergeDuration.Nanoseconds(),
+		"mergeDurationUs",
+		mergeDuration.Microseconds(),
+	)
+	// mergeStart := time.Now()
+
+	// acceptedFragments := 0
+	// rejectedFragments := 0
+
+	// for _, fragment := range fragments {
+
+	// 	bucketStart := time.Now()
+
+	// 	log.Debug(
+	// 		"Overlay merge: applying fragment",
+	// 		"bucket", fragment.bucket,
+	// 		"txs", len(fragment.txs),
+	// 	)
+
+	// 	snap := env.state.Snapshot()
+	// 	gp := env.gasPool.Gas()
+
+	// 	okFrag := true
+
+	// 	for _, tx := range fragment.txs {
+
+	// 		if tx == nil {
+	// 			continue
+	// 		}
+
+	// 		if !env.txFitsSize(tx) {
+	// 			okFrag = false
+
+	// 			log.Debug(
+	// 				"Fragment rejected: block size limit",
+	// 				"bucket", fragment.bucket,
+	// 				"hash", tx.Hash(),
+	// 			)
+
+	// 			break
+	// 		}
+
+	// 		// ====================================================
+	// 		// ADDRESS POLICY CHECK
+	// 		// ====================================================
+
+	// 		if pol := txpool.GetAddressPolicy();
+	// 			pol != nil && pol.Enabled {
+
+	// 			if to := tx.To(); to == nil {
+
+	// 				if err :=
+	// 					pol.CheckTxAdmission(
+	// 						nil,
+	// 						tx.Data(),
+	// 					); err != nil {
+
+	// 					log.Debug(
+	// 						"Rejecting fragment tx by address policy",
+	// 						"bucket", fragment.bucket,
+	// 						"hash", tx.Hash(),
+	// 						"err", err,
+	// 					)
+
+	// 					okFrag = false
+	// 					break
+	// 				}
+
+	// 			} else {
+
+	// 				if err :=
+	// 					pol.CheckCallTargetRuntime(
+	// 						env.state,
+	// 						*to,
+	// 					); err != nil {
+
+	// 					log.Debug(
+	// 						"Rejecting fragment tx by address policy",
+	// 						"bucket", fragment.bucket,
+	// 						"hash", tx.Hash(),
+	// 						"to", *to,
+	// 						"err", err,
+	// 					)
+
+	// 					okFrag = false
+	// 					break
+	// 				}
+	// 			}
+	// 		}
+
+	// 		// ====================================================
+	// 		// EXECUTE TRANSACTION
+	// 		// ====================================================
+
+	// 		env.state.SetTxContext(
+	// 			tx.Hash(),
+	// 			env.tcount,
+	// 		)
+
+	// 		if err :=
+	// 			miner.commitTransaction(
+	// 				env,
+	// 				tx,
+	// 			); err != nil {
+
+	// 			log.Debug(
+	// 				"Fragment transaction execution failed",
+	// 				"bucket", fragment.bucket,
+	// 				"hash", tx.Hash(),
+	// 				"err", err,
+	// 			)
+
+	// 			okFrag = false
+	// 			break
+	// 		}
+	// 	}
+
+	// 	// ========================================================
+	// 	// VERIFY FRAGMENT STATE ROOT
+	// 	// ========================================================
+
+	// 	if okFrag {
+
+	// 		gotRoot :=
+	// 			env.state.IntermediateRoot(
+	// 				miner.chainConfig.IsEIP158(
+	// 					env.header.Number,
+	// 				),
+	// 			)
+
+	// 		if gotRoot != fragment.wantRoot {
+
+	// 			log.Debug(
+	// 				"Fragment root mismatch",
+	// 				"bucket", fragment.bucket,
+	// 				"wantRoot", fragment.wantRoot,
+	// 				"gotRoot", gotRoot,
+	// 			)
+
+	// 			okFrag = false
+	// 		}
+	// 	}
+
+	// 	if !okFrag {
+
+	// 		env.state.RevertToSnapshot(snap)
+	// 		env.gasPool.SetGas(gp)
+
+	// 		rejectedFragments++
+
+	// 	} else {
+
+	// 		acceptedFragments++
+	// 	}
+
+	// 	bucketDuration :=
+	// 		time.Since(bucketStart)
+
+	// 	log.Info(
+	// 		"FINAL VALIDATOR FRAGMENT APPLY",
+	// 		"bucket", fragment.bucket,
+	// 		"txs", len(fragment.txs),
+	// 		"accepted", okFrag,
+	// 		"durationNs",
+	// 		bucketDuration.Nanoseconds(),
+	// 		"durationUs",
+	// 		bucketDuration.Microseconds(),
+	// 	)
+	// }
+
+	// mergeDuration =
+	// 	time.Since(mergeStart)
+
+	// log.Info(
+	// 	"FINAL VALIDATOR FRAGMENT MERGE COMPLETE",
+	// 	"receivedFragments", receivedFragments,
+	// 	"acceptedFragments", acceptedFragments,
+	// 	"rejectedFragments", rejectedFragments,
+	// 	"totalTransactions", totalTransactions,
+	// 	"mergeDurationNs",
+	// 	mergeDuration.Nanoseconds(),
+	// 	"mergeDurationUs",
+	// 	mergeDuration.Microseconds(),
+	// )
+
+	return
 }
 
-// generateWork generates a sealing block based on the given parameters.
-func (miner *Miner) generateWork(genParam *generateParams, witness bool) *newPayloadResult {
+func (miner *Miner) generateWork(
+	genParam *generateParams,
+	witness bool,
+) *newPayloadResult {
+
 	work, err := miner.prepareWork(genParam, witness)
 	if err != nil {
 		return &newPayloadResult{err: err}
 	}
 
 	// Check withdrawals fit max block size.
-	// Due to the cap on withdrawal count, this can actually never happen, but we still need to
-	// check to ensure the CL notices there's a problem if the withdrawal cap is ever lifted.
 	maxBlockSize := params.MaxBlockSize - maxBlockSizeBufferZone
+
 	if genParam.withdrawals.Size() > maxBlockSize {
-		return &newPayloadResult{err: errors.New("withdrawals exceed max block size")}
+		return &newPayloadResult{
+			err: errors.New("withdrawals exceed max block size"),
+		}
 	}
-	// Also add size of withdrawals to work block size.
+
 	work.size += uint64(genParam.withdrawals.Size())
 
+	// ============================================================
+	// MODIFIED PROTOCOL METRIC VARIABLES
+	//
+	// IMPORTANT:
+	// These must be declared OUTSIDE the if !genParam.noTxs block
+	// because they are needed later during final block assembly.
+	// ============================================================
+
+	var (
+		receivedFragments int
+		totalFragmentTxs  int
+
+		collectionDuration       time.Duration
+		mergeDuration            time.Duration
+		fragmentProcessingDuration time.Duration
+
+		// Wall-clock validator processing from fragment stage
+		// through final block assembly.
+		finalValidatorStart time.Time
+	)
+
+	// Only start this metric for a real full payload with fragments.
+	hasFragments :=
+		!genParam.noTxs &&
+			genParam.fragPro != nil &&
+			genParam.numBuckets != 0
+
+	if hasFragments {
+		finalValidatorStart = time.Now()
+	}
+
+	// ============================================================
+	// TRANSACTION / FRAGMENT PROCESSING
+	// ============================================================
+
 	if !genParam.noTxs {
+
 		interrupt := new(atomic.Int32)
-		timer := time.AfterFunc(miner.config.Recommit, func() {
-			interrupt.Store(commitInterruptTimeout)
-		})
+
+		timer := time.AfterFunc(
+			miner.config.Recommit,
+			func() {
+				interrupt.Store(commitInterruptTimeout)
+			},
+		)
+
 		defer timer.Stop()
 
-		//START: Merge leader block
-		// Optimistic fragment verify: re-exec fragment txs only, compare post-root.
-		// If fragment fails, revert and keep going (fallback is normal txpool fill).
-		if !genParam.noTxs && genParam.fragPro != nil && genParam.numBuckets != 0 {
-			miner.applyVerifiedFragments(work, genParam.fragPro, genParam.numBuckets)
-		}
-		//END: Merge leader block
+		// ========================================================
+		// LEADER FRAGMENT COLLECTION + VERIFY/MERGE
+		// ========================================================
 
-		err := miner.fillTransactions(interrupt, work)
-		//TODO Add back, comment above
-		//err := miner.fillTransactions(interrupt, work, genParam.txSource)
-		if errors.Is(err, errBlockInterruptedByTimeout) {
-			log.Warn("Block building is interrupted", "allowance", common.PrettyDuration(miner.config.Recommit))
+		if hasFragments {
+
+			fragmentTotalStart := time.Now()
+
+			receivedFragments,
+				totalFragmentTxs,
+				collectionDuration,
+				mergeDuration =
+				miner.applyVerifiedFragments(
+					work,
+					genParam.fragPro,
+					genParam.numBuckets,
+				)
+
+			fragmentProcessingDuration =
+				time.Since(fragmentTotalStart)
+
+			log.Info(
+				"FINAL VALIDATOR FRAGMENT STAGE COMPLETE",
+
+				"payloadID",
+				fmt.Sprintf("%x", genParam.payloadID),
+
+				"expectedFragments",
+				genParam.numBuckets,
+
+				"receivedFragments",
+				receivedFragments,
+
+				"fragmentTransactions",
+				totalFragmentTxs,
+
+				"collectionDurationNs",
+				collectionDuration.Nanoseconds(),
+
+				"collectionDurationUs",
+				collectionDuration.Microseconds(),
+
+				"mergeDurationNs",
+				mergeDuration.Nanoseconds(),
+
+				"mergeDurationUs",
+				mergeDuration.Microseconds(),
+
+				"fragmentProcessingDurationNs",
+				fragmentProcessingDuration.Nanoseconds(),
+
+				"fragmentProcessingDurationUs",
+				fragmentProcessingDuration.Microseconds(),
+			)
+		}
+
+		// ========================================================
+		// NORMAL TXPOOL FALLBACK / FILL
+		// ========================================================
+
+		err := miner.fillTransactions(
+			interrupt,
+			work,
+		)
+
+		if errors.Is(
+			err,
+			errBlockInterruptedByTimeout,
+		) {
+			log.Warn(
+				"Block building is interrupted",
+				"allowance",
+				common.PrettyDuration(
+					miner.config.Recommit,
+				),
+			)
 		}
 	}
-	body := types.Body{Transactions: work.txs, Withdrawals: genParam.withdrawals}
+
+	// ============================================================
+	// BUILD BLOCK BODY
+	// ============================================================
+
+	body := types.Body{
+		Transactions: work.txs,
+		Withdrawals:  genParam.withdrawals,
+	}
 
 	allLogs := make([]*types.Log, 0)
+
 	for _, r := range work.receipts {
-		allLogs = append(allLogs, r.Logs...)
+		allLogs = append(
+			allLogs,
+			r.Logs...,
+		)
 	}
 
-	// Collect consensus-layer requests if Prague is enabled.
+	// ============================================================
+	// CONSENSUS LAYER REQUESTS
+	// ============================================================
+
 	var requests [][]byte
-	if miner.chainConfig.IsPrague(work.header.Number, work.header.Time) {
+
+	if miner.chainConfig.IsPrague(
+		work.header.Number,
+		work.header.Time,
+	) {
+
 		requests = [][]byte{}
+
 		// EIP-6110 deposits
-		if err := core.ParseDepositLogs(&requests, allLogs, miner.chainConfig); err != nil {
-			return &newPayloadResult{err: err}
+		if err := core.ParseDepositLogs(
+			&requests,
+			allLogs,
+			miner.chainConfig,
+		); err != nil {
+
+			return &newPayloadResult{
+				err: err,
+			}
 		}
-		// EIP-7002
-		if err := core.ProcessWithdrawalQueue(&requests, work.evm); err != nil {
-			return &newPayloadResult{err: err}
+
+		// EIP-7002 withdrawals
+		if err := core.ProcessWithdrawalQueue(
+			&requests,
+			work.evm,
+		); err != nil {
+
+			return &newPayloadResult{
+				err: err,
+			}
 		}
+
 		// EIP-7251 consolidations
-		if err := core.ProcessConsolidationQueue(&requests, work.evm); err != nil {
-			return &newPayloadResult{err: err}
+		if err := core.ProcessConsolidationQueue(
+			&requests,
+			work.evm,
+		); err != nil {
+
+			return &newPayloadResult{
+				err: err,
+			}
 		}
-	}
-	if requests != nil {
-		reqHash := types.CalcRequestsHash(requests)
-		work.header.RequestsHash = &reqHash
 	}
 
-	block, err := miner.engine.FinalizeAndAssemble(miner.chain, work.header, work.state, &body, work.receipts)
-	if err != nil {
-		return &newPayloadResult{err: err}
+	if requests != nil {
+
+		reqHash :=
+			types.CalcRequestsHash(
+				requests,
+			)
+
+		work.header.RequestsHash =
+			&reqHash
 	}
+
+	// ============================================================
+	// FINAL BLOCK ASSEMBLY TIMING
+	// ============================================================
+
+	blockBuildStart := time.Now()
+
+	block, err :=
+		miner.engine.FinalizeAndAssemble(
+			miner.chain,
+			work.header,
+			work.state,
+			&body,
+			work.receipts,
+		)
+
+	blockBuildDuration :=
+		time.Since(blockBuildStart)
+
+	if err != nil {
+		return &newPayloadResult{
+			err: err,
+		}
+	}
+
+	// ============================================================
+	// MODIFIED PROTOCOL TIMING
+	// ============================================================
+
+	if hasFragments {
+
+		// --------------------------------------------------------
+		// Pure modified-protocol processing cost:
+		//
+		// collection
+		//     +
+		// fragment verification/merge
+		//     +
+		// final block assembly
+		// --------------------------------------------------------
+
+		protocolDuration :=
+			collectionDuration +
+				mergeDuration +
+				blockBuildDuration
+
+		// --------------------------------------------------------
+		// Wall-clock final validator duration.
+		//
+		// This DOES include time between fragment processing and
+		// FinalizeAndAssemble, such as fillTransactions and request
+		// processing.
+		// --------------------------------------------------------
+
+		finalValidatorDuration :=
+			time.Since(finalValidatorStart)
+
+		log.Info(
+			"FINAL VALIDATOR COMPLETE TIMING",
+
+			"payloadID",
+			fmt.Sprintf(
+				"%x",
+				genParam.payloadID,
+			),
+
+			"blockNumber",
+			block.NumberU64(),
+
+			"blockHash",
+			block.Hash(),
+
+			"expectedFragments",
+			genParam.numBuckets,
+
+			"receivedFragments",
+			receivedFragments,
+
+			"fragmentTransactions",
+			totalFragmentTxs,
+
+			"finalBlockTransactions",
+			len(block.Transactions()),
+
+			// Fragment collection
+			"collectionDurationNs",
+			collectionDuration.Nanoseconds(),
+
+			"collectionDurationUs",
+			collectionDuration.Microseconds(),
+
+			// Fragment verification + execution + merge
+			"mergeDurationNs",
+			mergeDuration.Nanoseconds(),
+
+			"mergeDurationUs",
+			mergeDuration.Microseconds(),
+
+			// Collection + merge together
+			"fragmentProcessingDurationNs",
+			fragmentProcessingDuration.Nanoseconds(),
+
+			"fragmentProcessingDurationUs",
+			fragmentProcessingDuration.Microseconds(),
+
+			// FinalizeAndAssemble only
+			"blockBuildDurationNs",
+			blockBuildDuration.Nanoseconds(),
+
+			"blockBuildDurationUs",
+			blockBuildDuration.Microseconds(),
+
+			// Modified protocol components only
+			"protocolDurationNs",
+			protocolDuration.Nanoseconds(),
+
+			"protocolDurationUs",
+			protocolDuration.Microseconds(),
+
+			// Entire validator wall-clock section
+			"finalValidatorDurationNs",
+			finalValidatorDuration.Nanoseconds(),
+
+			"finalValidatorDurationUs",
+			finalValidatorDuration.Microseconds(),
+		)
+
+		// ========================================================
+		// WRITE FINAL VALIDATOR METRIC TO CSV
+		// ========================================================
+
+		recordFragmentMergeMetric(
+			FragmentMergeMetric{
+
+				TimestampUTC:
+					time.Now().
+						UTC().
+						Format(
+							time.RFC3339Nano,
+						),
+
+				PayloadID:
+					fmt.Sprintf(
+						"%x",
+						genParam.payloadID,
+					),
+
+				ExpectedFragments:
+					int(
+						genParam.numBuckets,
+					),
+
+				ReceivedFragments:
+					receivedFragments,
+
+				TotalTransactions:
+					totalFragmentTxs,
+
+				CollectionDuration:
+					collectionDuration,
+
+				MergeDuration:
+					mergeDuration,
+
+				BlockBuildDuration:
+					blockBuildDuration,
+
+				TotalDuration:
+					protocolDuration,
+			},
+		)
+	}
+
+	// ============================================================
+	// RETURN BLOCK
+	// ============================================================
+
 	return &newPayloadResult{
 		block:    block,
 		fees:     totalFees(block, work.receipts),
@@ -327,6 +1172,221 @@ func (miner *Miner) generateWork(genParam *generateParams, witness bool) *newPay
 		witness:  work.witness,
 	}
 }
+
+// generateWork generates a sealing block based on the given parameters.
+// func (miner *Miner) generateWork(genParam *generateParams, witness bool) *newPayloadResult {
+// 	work, err := miner.prepareWork(genParam, witness)
+// 	if err != nil {
+// 		return &newPayloadResult{err: err}
+// 	}
+
+// 	// Check withdrawals fit max block size.
+// 	// Due to the cap on withdrawal count, this can actually never happen, but we still need to
+// 	// check to ensure the CL notices there's a problem if the withdrawal cap is ever lifted.
+// 	maxBlockSize := params.MaxBlockSize - maxBlockSizeBufferZone
+// 	if genParam.withdrawals.Size() > maxBlockSize {
+// 		return &newPayloadResult{err: errors.New("withdrawals exceed max block size")}
+// 	}
+// 	// Also add size of withdrawals to work block size.
+// 	work.size += uint64(genParam.withdrawals.Size())
+
+// 	if !genParam.noTxs {
+// 		interrupt := new(atomic.Int32)
+// 		timer := time.AfterFunc(miner.config.Recommit, func() {
+// 			interrupt.Store(commitInterruptTimeout)
+// 		})
+// 		defer timer.Stop()
+
+// 		//START: Merge leader block
+// 		// Optimistic fragment verify: re-exec fragment txs only, compare post-root.
+// 		// If fragment fails, revert and keep going (fallback is normal txpool fill).
+// 		// if !genParam.noTxs && genParam.fragPro != nil && genParam.numBuckets != 0 {
+// 		// 	miner.applyVerifiedFragments(work, genParam.fragPro, genParam.numBuckets)
+// 		// }
+
+// 		var (
+// 			receivedFragments  int
+// 			totalFragmentTxs   int
+// 			collectionDuration time.Duration
+// 			mergeDuration      time.Duration
+// 		)
+
+// 		fragmentTotalStart := time.Now()
+
+// 		if !genParam.noTxs &&
+// 			genParam.fragPro != nil &&
+// 			genParam.numBuckets != 0 {
+
+// 			receivedFragments,
+// 				totalFragmentTxs,
+// 				collectionDuration,
+// 				mergeDuration =
+// 				miner.applyVerifiedFragments(
+// 					work,
+// 					genParam.fragPro,
+// 					genParam.numBuckets,
+// 				)
+// 		}
+
+// 		fragmentProcessingDuration :=
+// 			time.Since(fragmentTotalStart)
+// 		//END: Merge leader block
+
+// 		err := miner.fillTransactions(interrupt, work)
+// 		//TODO Add back, comment above
+// 		//err := miner.fillTransactions(interrupt, work, genParam.txSource)
+// 		if errors.Is(err, errBlockInterruptedByTimeout) {
+// 			log.Warn("Block building is interrupted", "allowance", common.PrettyDuration(miner.config.Recommit))
+// 		}
+// 	}
+// 	body := types.Body{Transactions: work.txs, Withdrawals: genParam.withdrawals}
+
+// 	allLogs := make([]*types.Log, 0)
+// 	for _, r := range work.receipts {
+// 		allLogs = append(allLogs, r.Logs...)
+// 	}
+
+// 	// Collect consensus-layer requests if Prague is enabled.
+// 	var requests [][]byte
+// 	if miner.chainConfig.IsPrague(work.header.Number, work.header.Time) {
+// 		requests = [][]byte{}
+// 		// EIP-6110 deposits
+// 		if err := core.ParseDepositLogs(&requests, allLogs, miner.chainConfig); err != nil {
+// 			return &newPayloadResult{err: err}
+// 		}
+// 		// EIP-7002
+// 		if err := core.ProcessWithdrawalQueue(&requests, work.evm); err != nil {
+// 			return &newPayloadResult{err: err}
+// 		}
+// 		// EIP-7251 consolidations
+// 		if err := core.ProcessConsolidationQueue(&requests, work.evm); err != nil {
+// 			return &newPayloadResult{err: err}
+// 		}
+// 	}
+// 	if requests != nil {
+// 		reqHash := types.CalcRequestsHash(requests)
+// 		work.header.RequestsHash = &reqHash
+// 	}
+
+// 	// block, err := miner.engine.FinalizeAndAssemble(miner.chain, work.header, work.state, &body, work.receipts)
+// 	// ============================================================
+// 	// FINAL BLOCK ASSEMBLY TIMING
+// 	// ============================================================
+
+// 	blockBuildStart := time.Now()
+
+// 	block, err :=
+// 		miner.engine.FinalizeAndAssemble(
+// 			miner.chain,
+// 			work.header,
+// 			work.state,
+// 			&body,
+// 			work.receipts,
+// 		)
+
+// 	blockBuildDuration :=
+// 		time.Since(blockBuildStart)
+
+// 	// if err != nil {
+// 	// 	return &newPayloadResult{err: err}
+// 	// }
+	
+// 	if err != nil {
+// 		return &newPayloadResult{err: err}
+// 	}
+
+
+// 	totalDuration :=
+// 	collectionDuration +
+// 	mergeDuration +
+// 	blockBuildDuration
+
+// 	log.Info(
+// 		"FINAL VALIDATOR COMPLETE TIMING",
+// 		"payloadID",
+// 		fmt.Sprintf("%x", genParam.payloadID),
+
+// 		"blockNumber",
+// 		block.NumberU64(),
+
+// 		"blockHash",
+// 		block.Hash(),
+
+// 		"expectedFragments",
+// 		genParam.numBuckets,
+
+// 		"receivedFragments",
+// 		receivedFragments,
+
+// 		"fragmentTransactions",
+// 		totalFragmentTxs,
+
+// 		"finalBlockTransactions",
+// 		len(block.Transactions()),
+
+// 		"collectionDurationUs",
+// 		collectionDuration.Microseconds(),
+
+// 		"mergeDurationUs",
+// 		mergeDuration.Microseconds(),
+
+// 		"blockBuildDurationUs",
+// 		blockBuildDuration.Microseconds(),
+
+// 		"fragmentProcessingDurationUs",
+// 		fragmentProcessingDuration.Microseconds(),
+
+// 		"totalDurationUs",
+// 		totalDuration.Microseconds(),
+// 	)
+
+
+// 	recordFragmentMergeMetric(
+// 		FragmentMergeMetric{
+// 			TimestampUTC:
+// 				time.Now().
+// 					UTC().
+// 					Format(time.RFC3339Nano),
+
+// 			PayloadID:
+// 				fmt.Sprintf(
+// 					"%x",
+// 					genParam.payloadID,
+// 				),
+
+// 			ExpectedFragments:
+// 				int(genParam.numBuckets),
+
+// 			ReceivedFragments:
+// 				receivedFragments,
+
+// 			TotalTransactions:
+// 				totalFragmentTxs,
+
+// 			CollectionDuration:
+// 				collectionDuration,
+
+// 			MergeDuration:
+// 				mergeDuration,
+
+// 			BlockBuildDuration:
+// 				blockBuildDuration,
+
+// 			TotalDuration:
+// 				totalDuration,
+// 		},
+// 	)
+
+// 	return &newPayloadResult{
+// 		block:    block,
+// 		fees:     totalFees(block, work.receipts),
+// 		sidecars: work.sidecars,
+// 		stateDB:  work.state,
+// 		receipts: work.receipts,
+// 		requests: requests,
+// 		witness:  work.witness,
+// 	}
+// }
 
 // prepareWork constructs the sealing task according to the given parameters,
 // either based on the last chain head or specified parent. In this function

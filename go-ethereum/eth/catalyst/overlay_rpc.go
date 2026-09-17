@@ -11,6 +11,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"	
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/miner"
+	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
@@ -92,6 +94,35 @@ func (o *OverlayRPC) SubmitFragment(_ context.Context, parent common.Hash, times
 	}
 	log.Debug("Overlay submit fragment received", "bucket", bucketID, "txs", len(decoded_tx), "postRoot", postRoot, "hostname", os.Getenv("HOSTNAME"),)
 	o.overlay.PutFragment(slot, bucketID, decoded_tx, postRoot)
+	return true, nil
+}
+
+// overlay_submitSubBlock(parent, timestamp, version, subBlockRLP)
+// subBlockRLP is an RLP-encoded miner.SubBlock: the executed txs, their
+// receipts, the post-state root, the gas used, and the state the sub-block
+// touched and changed.
+func (o *OverlayRPC) SubmitSubBlock(_ context.Context, parent common.Hash, timestamp uint64, version byte, subBlockRLP hexutil.Bytes) (bool, error) {
+	if o.overlay == nil {
+		return false, errors.New("overlay disabled")
+	}
+	slot := SlotKey{Parent: parent, Time: timestamp, Version: engine.PayloadVersion(version)}
+
+	var sub miner.SubBlock
+	if err := rlp.DecodeBytes(subBlockRLP, &sub); err != nil {
+		return false, err
+	}
+
+	log.Debug("Overlay submit sub-block received",
+		"bucket", sub.BucketID,
+		"subBlock", sub.Hash(),
+		"txs", len(sub.Txs),
+		"gasUsed", sub.GasUsed,
+		"postRoot", sub.PostRoot,
+		"storageWrites", len(sub.Diff.Storage),
+		"hostname", os.Getenv("HOSTNAME"),
+	)
+
+	o.overlay.PutSubBlock(slot, &sub)
 	return true, nil
 }
 

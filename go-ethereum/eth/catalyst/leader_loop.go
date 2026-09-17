@@ -2,12 +2,11 @@ package catalyst
 
 import (
 	"context"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/eth"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/miner"
+	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/ethereum/go-ethereum/src/bucket"
 	"time"
@@ -94,48 +93,42 @@ func (l *LeaderLoop) Run(ctx context.Context) error {
 			NumBuckets:   uint32(l.NumBuckets),
 		}
 
-		txs, postRoot, err := l.buildExecutedFragment(ctx, buildArgs, uint32(bucketID))
+		sub, err := l.buildSubBlock(ctx, buildArgs, uint32(bucketID))
 		if err != nil {
-			log.Warn("LeaderLoop build fragment failed", "bucket", bucketID, "err", err)
+			log.Warn("LeaderLoop build sub-block failed", "bucket", bucketID, "err", err)
 			continue
 		}
 
-		out := make([]hexutil.Bytes, 0, len(txs))
-		for _, tx := range txs {
-			b, err := tx.MarshalBinary()
-			if err != nil {
-				out = nil
-				break
-			}
-			out = append(out, b)
-		}
-		if out == nil {
+		blob, err := rlp.EncodeToBytes(sub)
+		if err != nil {
+			log.Warn("LeaderLoop encode sub-block failed", "bucket", bucketID, "err", err)
 			continue
 		}
 
 		sendStart := time.Now()
 
-		log.Debug("FRAGMENT SEND START",
+		log.Debug("SUB-BLOCK SEND START",
 			"bucket", bucketID,
-			"txs", len(txs),
+			"subBlock", sub.Hash(),
+			"txs", len(sub.Txs),
+			"bytes", len(blob),
 		)
 
 		var ok bool
 		err = l.OverlayRPC.CallContext(
 			ctx,
 			&ok,
-			"overlay_submitFragment",
+			"overlay_submitSubBlock",
 			active.Parent,
 			active.Time,
 			active.Version,
-			uint32(bucketID),
-			out,
-			postRoot,
+			hexutil.Bytes(blob),
 		)
 
-		log.Debug("FRAGMENT SEND DONE",
+		log.Debug("SUB-BLOCK SEND DONE",
 			"bucket", bucketID,
-			"txs", len(txs),
+			"subBlock", sub.Hash(),
+			"txs", len(sub.Txs),
 			"ok", ok,
 			"err", err,
 			"elapsed", time.Since(sendStart),
@@ -203,7 +196,8 @@ func (l *LeaderLoop) Run(ctx context.Context) error {
 	}
 }
 
-// buildExecutedFragment executes the leader's bucket fragment using the existing geth selection code
-func (l *LeaderLoop) buildExecutedFragment(ctx context.Context, args *miner.BuildPayloadArgs, bucketID uint32) ([]*types.Transaction, common.Hash, error) {
-	return l.LocalEth.Miner().BuildExecutedFragment(args, bucketID)
+// buildSubBlock executes this leader's bucket as a sub-block, using the existing
+// geth selection code for the transaction set.
+func (l *LeaderLoop) buildSubBlock(ctx context.Context, args *miner.BuildPayloadArgs, bucketID uint32) (*miner.SubBlock, error) {
+	return l.LocalEth.Miner().BuildSubBlock(args, bucketID)
 }

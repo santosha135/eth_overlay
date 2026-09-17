@@ -4,11 +4,11 @@ import (
 	"context"
 	"sync"
 
+	"github.com/ethereum/go-ethereum/beacon/engine"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/miner"
 	"github.com/ethereum/go-ethereum/src/bucket"
-	"github.com/ethereum/go-ethereum/beacon/engine"
 )
 
 type OverlayArgs struct {
@@ -21,38 +21,25 @@ type OverlayArgs struct {
 	Version      engine.PayloadVersion // engine.PayloadVersion underlying
 }
 
-type ExecFragment struct {
-	BucketID  uint32
-	Txs       []*types.Transaction
-	PostRoot  common.Hash
-}
-
-// OverlaySvc stores leader-executed fragments keyed by (payloadID, bucketID).
+// OverlaySvc stores leader-built sub-blocks keyed by (slot, bucketID).
 type OverlaySvc struct {
-	mu      	sync.RWMutex
-	args 		map[SlotKey]*OverlayArgs 			// slot args for leaders
-	frags 		map[SlotKey]map[uint32]ExecFragment // fragments keyed by slot then bucket
-	scheduler 	*bucket.Scheduler 							// scheduler for leader selection
-	active		SlotKey 							// active slot
-	activeSet  	bool
-	activeEpoch uint64	
+	mu            sync.RWMutex
+	args          map[SlotKey]*OverlayArgs                 // slot args for leaders
+	subs          map[SlotKey]map[uint32]*miner.SubBlock   // sub-blocks keyed by slot then bucket
+	scheduler     *bucket.Scheduler                        // scheduler for leader selection
+	active        SlotKey                                  // active slot
+	activeSet     bool
+	activeEpoch   uint64
 	numBuckets    int
 	groupID       int
 	groupSize     int
 	myMemberIndex int
 }
 
-// func NewOverlaySvc(sched *bucket.Scheduler) *OverlaySvc {
-// 	return &OverlaySvc{
-// 		args:      make(map[SlotKey]*OverlayArgs),
-// 		frags:     make(map[SlotKey]map[uint32]ExecFragment),
-// 		scheduler: sched,
-// 	}
-// }
 func NewOverlaySvc(sched *bucket.Scheduler, numBuckets, groupID, groupSize, myMemberIndex int) *OverlaySvc {
 	return &OverlaySvc{
 		args:          make(map[SlotKey]*OverlayArgs),
-		frags:         make(map[SlotKey]map[uint32]ExecFragment),
+		subs:          make(map[SlotKey]map[uint32]*miner.SubBlock),
 		scheduler:     sched,
 		numBuckets:    numBuckets,
 		groupID:       groupID,
@@ -72,8 +59,8 @@ func (o *OverlaySvc) SetActiveSlot(slotkey SlotKey, epoch uint64, args *OverlayA
 	argCopy := *args
 	o.args[slotkey] = &argCopy
 
-	if o.frags[slotkey] == nil {
-		o.frags[slotkey] = make(map[uint32]ExecFragment)
+	if o.subs[slotkey] == nil {
+		o.subs[slotkey] = make(map[uint32]*miner.SubBlock)
 	}
 
 	// Keep only current slot to prevent unbounded memory growth.
@@ -82,29 +69,12 @@ func (o *OverlaySvc) SetActiveSlot(slotkey SlotKey, epoch uint64, args *OverlayA
 			delete(o.args, k)
 		}
 	}
-	for k := range o.frags {
+	for k := range o.subs {
 		if k != slotkey {
-			delete(o.frags, k)
+			delete(o.subs, k)
 		}
 	}
 }
-
-// func (o *OverlaySvc) SetActiveSlot(slotkey SlotKey, epoch uint64, args *OverlayArgs) {
-// 	o.mu.Lock()
-// 	o.active = slotkey
-// 	o.activeSet = true
-// 	o.activeEpoch = epoch
-
-// 	// store args for leaders
-// 	arg_cp := *args
-// 	o.args[slotkey] = &arg_cp
-
-// 	// ensure frag map exists
-// 	if o.frags[slotkey] == nil {
-// 		o.frags[slotkey] = make(map[uint32]ExecFragment)
-// 	}
-// 	o.mu.Unlock()
-// }
 
 func (o *OverlaySvc) GetActiveSlot() (SlotKey, uint64, bool) {
 	o.mu.RLock()
@@ -119,46 +89,68 @@ func (o *OverlaySvc) GetSlotArgs(slotkey SlotKey) (*OverlayArgs, bool) {
 	return a, ok
 }
 
-// PutFragment method used by Leaders.
-// Overwrites a fragment for (payloadID, bucketID).
-func (o *OverlaySvc) PutFragment(slot SlotKey, bucketID uint32, txs []*types.Transaction, postRoot common.Hash) {
-	tx_list := append([]*types.Transaction(nil), txs...)
-
-	o.mu.Lock() //Make sure no one tryes to alter overlay
-	frag_list := o.frags[slot]
-	if frag_list == nil {
-		frag_list = make(map[uint32]ExecFragment)
-		o.frags[slot] = frag_list
+// PutSubBlock is used by leaders. It overwrites the sub-block for
+// (slot, bucketID).
+func (o *OverlaySvc) PutSubBlock(slot SlotKey, sub *miner.SubBlock) {
+	if sub == nil {
+		return
 	}
-	frag_list[bucketID] = ExecFragment{BucketID: bucketID, Txs: tx_list, PostRoot: postRoot}
+
+	o.mu.Lock() // Make sure no one tries to alter the overlay
+	sub_list := o.subs[slot]
+	if sub_list == nil {
+		sub_list = make(map[uint32]*miner.SubBlock)
+		o.subs[slot] = sub_list
+	}
+	sub_list[sub.BucketID] = sub
 	o.mu.Unlock()
 }
 
-// FragmentProvider method used by Validator.
-// Returns (txs, postRoot, ok).
-func (o *OverlaySvc) GetFragment(slot SlotKey, bucketID uint32) ([]*types.Transaction, common.Hash, bool) {
+// PutFragment is the legacy path: a bare tx list with a claimed post root and no
+// state diff. It is stored as a sub-block the merge can only re-execute.
+func (o *OverlaySvc) PutFragment(slot SlotKey, bucketID uint32, txs []*types.Transaction, postRoot common.Hash) {
+	o.PutSubBlock(slot, &miner.SubBlock{
+		BucketID: bucketID,
+		Txs:      append([]*types.Transaction(nil), txs...),
+		PostRoot: postRoot,
+	})
+}
+
+// GetSubBlock is used by the proposer to collect what the leaders built.
+func (o *OverlaySvc) GetSubBlock(slot SlotKey, bucketID uint32) (*miner.SubBlock, bool) {
 	o.mu.RLock()
 	defer o.mu.RUnlock()
-	frag_list := o.frags[slot]
-	if frag_list == nil {
-		return nil, common.Hash{}, false
+	sub_list := o.subs[slot]
+	if sub_list == nil {
+		return nil, false
 	}
-	fragment, ok := frag_list[bucketID]
+	sub, ok := sub_list[bucketID]
+	if !ok || sub == nil {
+		return nil, false
+	}
+	return sub, true
+}
+
+// GetFragment is the narrower view of a stored sub-block.
+func (o *OverlaySvc) GetFragment(slot SlotKey, bucketID uint32) ([]*types.Transaction, common.Hash, bool) {
+	sub, ok := o.GetSubBlock(slot, bucketID)
 	if !ok {
 		return nil, common.Hash{}, false
 	}
-	return fragment.Txs, fragment.PostRoot, true
+	return sub.Txs, sub.PostRoot, true
 }
 
-// BeginSlot: attach fragment provider to the args so miner can pull fragments.
+// BeginSlot: attach the sub-block provider to the args so the miner can pull
+// sub-blocks.
 func (o *OverlaySvc) BeginSlot(ctx context.Context, slot SlotKey, args *miner.BuildPayloadArgs) {
 	args.FragmentKey = slot.ID()
-	args.FragPro = &slotFragmentProvider{o: o, slot: slot}}
+	args.FragPro = &slotFragmentProvider{o: o, slot: slot}
+}
 
 func (o *OverlaySvc) EndSlot(slot SlotKey) {
 	o.mu.Lock()
 	delete(o.args, slot)
-	delete(o.frags, slot)
+	delete(o.subs, slot)
 	o.mu.Unlock()
 }
 
@@ -170,4 +162,8 @@ type slotFragmentProvider struct {
 
 func (p *slotFragmentProvider) GetFragment(bucketID uint32) ([]*types.Transaction, common.Hash, bool) {
 	return p.o.GetFragment(p.slot, bucketID)
+}
+
+func (p *slotFragmentProvider) GetSubBlock(bucketID uint32) (*miner.SubBlock, bool) {
+	return p.o.GetSubBlock(p.slot, bucketID)
 }

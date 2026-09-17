@@ -7,21 +7,23 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/eth"
 	"github.com/ethereum/go-ethereum/miner"
-	"github.com/ethereum/go-ethereum/rpc"	
+	"github.com/ethereum/go-ethereum/rlp"
+	"github.com/ethereum/go-ethereum/rpc"
 )
 
-// LeaderAgent runs on a leader node and submits executed fragments to the proposer.
+// LeaderAgent runs on a leader node and submits built sub-blocks to the proposer.
 type LeaderAgent struct {
-	eth          *eth.Ethereum  // local node (leader) for building fragment
-	proposerRPC  *rpc.Client    // RPC client pointing to proposer node
+	eth         *eth.Ethereum // local node (leader) for building the sub-block
+	proposerRPC *rpc.Client   // RPC client pointing to proposer node
 }
 
 func NewLeaderAgent(eth *eth.Ethereum, proposerRPC *rpc.Client) *LeaderAgent {
 	return &LeaderAgent{eth: eth, proposerRPC: proposerRPC}
 }
 
-// BuildAndSubmitFragment executes the local fragment for bucketID and submits it to proposer.
-func (a *LeaderAgent) BuildAndSubmitFragment(ctx context.Context, payloadIDHex string, bucketID uint32, args *miner.BuildPayloadArgs) error {
+// BuildAndSubmitSubBlock builds the local sub-block for bucketID and submits it
+// to the proposer.
+func (a *LeaderAgent) BuildAndSubmitSubBlock(ctx context.Context, bucketID uint32, args *miner.BuildPayloadArgs) error {
 	if a.eth == nil || a.proposerRPC == nil {
 		return fmt.Errorf("leader agent not initialized")
 	}
@@ -29,32 +31,33 @@ func (a *LeaderAgent) BuildAndSubmitFragment(ctx context.Context, payloadIDHex s
 		return fmt.Errorf("nil BuildPayloadArgs")
 	}
 
-	// 1) Build executed fragment locally
-	txs, postRoot, err := a.eth.Miner().BuildExecutedFragment(args, bucketID)
+	// 1) Build the sub-block locally.
+	sub, err := a.eth.Miner().BuildSubBlock(args, bucketID)
 	if err != nil {
 		return err
 	}
 
-	// 2) Convert txs to bytes for RPC
-	out := make([]hexutil.Bytes, 0, len(txs))
-	for _, tx := range txs {
-		if tx == nil {
-			continue
-		}
-		b, err := tx.MarshalBinary()
-		if err != nil {
-			return err
-		}
-		out = append(out, b)
+	// 2) Encode it for transport.
+	blob, err := rlp.EncodeToBytes(sub)
+	if err != nil {
+		return err
 	}
 
-	// 3) Submit fragment to proposer
+	// 3) Submit it to the proposer.
 	var ok bool
-	if err := a.proposerRPC.CallContext(ctx, &ok, "overlay_submitFragment", payloadIDHex, bucketID, out, postRoot); err != nil {
+	if err := a.proposerRPC.CallContext(
+		ctx,
+		&ok,
+		"overlay_submitSubBlock",
+		args.Parent,
+		args.Timestamp,
+		byte(args.Version),
+		hexutil.Bytes(blob),
+	); err != nil {
 		return err
 	}
 	if !ok {
-		return fmt.Errorf("overlay_submitFragment returned false")
+		return fmt.Errorf("overlay_submitSubBlock returned false")
 	}
 	return nil
 }

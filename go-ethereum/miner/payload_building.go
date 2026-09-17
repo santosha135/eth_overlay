@@ -35,6 +35,7 @@ import (
 
 type FragmentProvider interface {
 	GetFragment(bucketID uint32) ([]*types.Transaction, common.Hash, bool)
+	GetSubBlock(bucketID uint32) (*SubBlock, bool)
 }
 
 // BuildPayloadArgs contains the provided parameters for building payload.

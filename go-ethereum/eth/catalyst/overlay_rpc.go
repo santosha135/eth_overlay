@@ -122,7 +122,7 @@ func (o *OverlayRPC) SubmitSubBlock(_ context.Context, parent common.Hash, times
 		"hostname", os.Getenv("HOSTNAME"),
 	)
 
-	o.overlay.PutSubBlock(slot, &sub)
+	o.overlay.PutSubBlock(slot, &sub, len(subBlockRLP))
 	return true, nil
 }
 

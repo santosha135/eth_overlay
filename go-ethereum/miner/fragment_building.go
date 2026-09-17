@@ -120,6 +120,12 @@ func (miner *Miner) BuildSubBlock(args *BuildPayloadArgs, bucketID uint32) (*Sub
 		"postRoot", sub.PostRoot,
 		"storageWrites", len(sub.Diff.Storage),
 		"balanceDeltas", len(sub.Diff.Balances),
+		"nonceWrites", len(sub.Diff.Nonces),
+		"codeWrites", len(sub.Diff.Codes),
+		"readAccounts", len(sub.Access.ReadAccounts),
+		"readSlots", len(sub.Access.ReadSlots),
+		"writtenAccounts", len(sub.Access.WrittenAccounts),
+		"writtenSlots", len(sub.Access.WrittenSlots),
 		"elapsed", time.Since(start),
 	)
 

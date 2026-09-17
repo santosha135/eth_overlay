@@ -2,6 +2,7 @@ package miner
 
 import (
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -62,6 +63,14 @@ type AccessSet struct {
 	ReadSlots       []StorageSlot
 	WrittenAccounts []common.Address
 	WrittenSlots    []StorageSlot
+}
+
+// SubBlockMeta is what the proposer knows about a sub-block that is not part of
+// the sub-block itself: when it landed here and how many bytes arrived. It is
+// kept outside SubBlock so it never enters the RLP encoding.
+type SubBlockMeta struct {
+	ReceivedAt time.Time
+	BlobBytes  int
 }
 
 // SubBlock is what a bucket leader produces: a self-contained, executed piece of

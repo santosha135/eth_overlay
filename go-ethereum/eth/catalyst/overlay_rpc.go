@@ -91,7 +91,12 @@ func (o *OverlayRPC) SubmitFragment(_ context.Context, parent common.Hash, times
 		decoded_tx = append(decoded_tx, &tx)
 	}
 	log.Debug("Overlay submit fragment received", "bucket", bucketID, "txs", len(decoded_tx), "postRoot", postRoot, "hostname", os.Getenv("HOSTNAME"),)
-	o.overlay.PutFragment(slot, bucketID, decoded_tx, postRoot)
+	wireBytes := 0
+	for _, b := range txsRlpHex {
+		wireBytes += len(b)
+	}
+
+	o.overlay.PutFragment(slot, bucketID, decoded_tx, postRoot, wireBytes)
 	return true, nil
 }
 

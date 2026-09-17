@@ -2,6 +2,7 @@ package catalyst
 
 import (
 	"context"
+	"os"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -94,19 +95,25 @@ func (l *LeaderLoop) Run(ctx context.Context) error {
 			NumBuckets:   uint32(l.NumBuckets),
 		}
 
+		buildStart := time.Now()
+
 		txs, postRoot, err := l.buildExecutedFragment(ctx, buildArgs, uint32(bucketID))
 		if err != nil {
 			log.Warn("LeaderLoop build fragment failed", "bucket", bucketID, "err", err)
 			continue
 		}
 
+		buildDuration := time.Since(buildStart)
+
 		out := make([]hexutil.Bytes, 0, len(txs))
+		wireBytes := 0
 		for _, tx := range txs {
 			b, err := tx.MarshalBinary()
 			if err != nil {
 				out = nil
 				break
 			}
+			wireBytes += len(b)
 			out = append(out, b)
 		}
 		if out == nil {
@@ -118,6 +125,7 @@ func (l *LeaderLoop) Run(ctx context.Context) error {
 		log.Debug("FRAGMENT SEND START",
 			"bucket", bucketID,
 			"txs", len(txs),
+			"bytes", wireBytes,
 		)
 
 		var ok bool
@@ -133,13 +141,54 @@ func (l *LeaderLoop) Run(ctx context.Context) error {
 			postRoot,
 		)
 
+		sendDuration := time.Since(sendStart)
+
 		log.Debug("FRAGMENT SEND DONE",
 			"bucket", bucketID,
 			"txs", len(txs),
+			"bytes", wireBytes,
 			"ok", ok,
 			"err", err,
-			"elapsed", time.Since(sendStart),
+			"elapsed", sendDuration,
 		)
+
+		// Leader-side row: what this fragment cost to build and ship.
+		outcome := "sent"
+		reason := ""
+		if err != nil || !ok {
+			outcome = "send_failed"
+			if err != nil {
+				reason = err.Error()
+			} else {
+				reason = "proposer returned false"
+			}
+		}
+
+		blockNumber := uint64(0)
+		if head := l.LocalEth.BlockChain().CurrentBlock(); head != nil {
+			blockNumber = head.Number.Uint64() + 1
+		}
+
+		miner.RecordFragmentApplyMetric(miner.FragmentApplyMetric{
+			TimestampUTC: time.Now().UTC().Format(time.RFC3339Nano),
+			Role:         "leader",
+			Hostname:     os.Getenv("HOSTNAME"),
+
+			BlockNumber: blockNumber,
+			NumBuckets:  uint32(l.NumBuckets),
+			BucketID:    uint32(bucketID),
+
+			Txs:   len(txs),
+			Bytes: wireBytes,
+
+			Outcome:  outcome,
+			Reason:   reason,
+			WantRoot: postRoot.Hex(),
+
+			BuildDuration: buildDuration,
+			SendDuration:  sendDuration,
+			TotalDuration: buildDuration + sendDuration,
+		})
 		// bucketID := activeBucket
 		// groupSize := l.Scheduler.NumBuckets()
 		// for bucketID := 0; bucketID < groupSize; bucketID++ {

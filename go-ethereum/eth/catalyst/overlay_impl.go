@@ -3,6 +3,7 @@ package catalyst
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -25,6 +26,11 @@ type ExecFragment struct {
 	BucketID  uint32
 	Txs       []*types.Transaction
 	PostRoot  common.Hash
+
+	// Arrival accounting, filled in when the fragment lands here. Not part of
+	// what the leader sent.
+	ReceivedAt time.Time
+	Bytes      int
 }
 
 // OverlaySvc stores leader-executed fragments keyed by (payloadID, bucketID).
@@ -121,8 +127,10 @@ func (o *OverlaySvc) GetSlotArgs(slotkey SlotKey) (*OverlayArgs, bool) {
 
 // PutFragment method used by Leaders.
 // Overwrites a fragment for (payloadID, bucketID).
-func (o *OverlaySvc) PutFragment(slot SlotKey, bucketID uint32, txs []*types.Transaction, postRoot common.Hash) {
+func (o *OverlaySvc) PutFragment(slot SlotKey, bucketID uint32, txs []*types.Transaction, postRoot common.Hash, wireBytes int) {
 	tx_list := append([]*types.Transaction(nil), txs...)
+
+	receivedAt := time.Now()
 
 	o.mu.Lock() //Make sure no one tryes to alter overlay
 	frag_list := o.frags[slot]
@@ -130,8 +138,30 @@ func (o *OverlaySvc) PutFragment(slot SlotKey, bucketID uint32, txs []*types.Tra
 		frag_list = make(map[uint32]ExecFragment)
 		o.frags[slot] = frag_list
 	}
-	frag_list[bucketID] = ExecFragment{BucketID: bucketID, Txs: tx_list, PostRoot: postRoot}
+	frag_list[bucketID] = ExecFragment{
+		BucketID:   bucketID,
+		Txs:        tx_list,
+		PostRoot:   postRoot,
+		ReceivedAt: receivedAt,
+		Bytes:      wireBytes,
+	}
 	o.mu.Unlock()
+}
+
+// GetFragmentMeta reports when a fragment landed here and how big it was on the
+// wire.
+func (o *OverlaySvc) GetFragmentMeta(slot SlotKey, bucketID uint32) (miner.FragmentMeta, bool) {
+	o.mu.RLock()
+	defer o.mu.RUnlock()
+	frag_list := o.frags[slot]
+	if frag_list == nil {
+		return miner.FragmentMeta{}, false
+	}
+	fragment, ok := frag_list[bucketID]
+	if !ok {
+		return miner.FragmentMeta{}, false
+	}
+	return miner.FragmentMeta{ReceivedAt: fragment.ReceivedAt, Bytes: fragment.Bytes}, true
 }
 
 // FragmentProvider method used by Validator.
@@ -170,4 +200,8 @@ type slotFragmentProvider struct {
 
 func (p *slotFragmentProvider) GetFragment(bucketID uint32) ([]*types.Transaction, common.Hash, bool) {
 	return p.o.GetFragment(p.slot, bucketID)
+}
+
+func (p *slotFragmentProvider) GetFragmentMeta(bucketID uint32) (miner.FragmentMeta, bool) {
+	return p.o.GetFragmentMeta(p.slot, bucketID)
 }

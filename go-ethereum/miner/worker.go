@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"os"
 	"sync/atomic"
 	"time"
 
@@ -260,6 +261,9 @@ func (miner *Miner) applyVerifiedFragments(
 			new(core.GasPool).AddGas(env.header.GasLimit)
 	}
 
+	hostname := os.Getenv("HOSTNAME")
+	blockNumber := env.header.Number.Uint64()
+
 	log.Info(
 		"FINAL VALIDATOR FRAGMENT PROCESSING START",
 		"numBuckets", numBuckets,
@@ -267,73 +271,7 @@ func (miner *Miner) applyVerifiedFragments(
 	)
 
 	// ============================================================
-	// 1. FRAGMENT COLLECTION TIMING
-	// ============================================================
-
-	// collectionStart := time.Now()
-
-	// type collectedFragment struct {
-	// 	bucket   uint32
-	// 	txs      []*types.Transaction
-	// 	wantRoot common.Hash
-	// }
-
-	// fragments :=
-	// 	make([]collectedFragment, 0, numBuckets)
-
-	// for bucket := uint32(0); bucket < numBuckets; bucket++ {
-
-	// 	fragmentLookupStart := time.Now()
-
-	// 	txs, wantRoot, ok :=
-	// 		fp.GetFragment(bucket)
-
-	// 	fragmentLookupDuration :=
-	// 		time.Since(fragmentLookupStart)
-
-	// 	log.Info(
-	// 		"FINAL VALIDATOR FRAGMENT LOOKUP",
-	// 		"bucket", bucket,
-	// 		"available", ok,
-	// 		"txs", len(txs),
-	// 		"lookupDurationNs",
-	// 		fragmentLookupDuration.Nanoseconds(),
-	// 		"lookupDurationUs",
-	// 		fragmentLookupDuration.Microseconds(),
-	// 	)
-
-	// 	if !ok || len(txs) == 0 {
-	// 		continue
-	// 	}
-
-	// 	receivedFragments++
-	// 	totalTransactions += len(txs)
-
-	// 	fragments = append(
-	// 		fragments,
-	// 		collectedFragment{
-	// 			bucket:   bucket,
-	// 			txs:      txs,
-	// 			wantRoot: wantRoot,
-	// 		},
-	// 	)
-	// }
-
-	// collectionDuration =
-	// 	time.Since(collectionStart)
-
-	// log.Info(
-	// 	"FINAL VALIDATOR FRAGMENT COLLECTION COMPLETE",
-	// 	"expectedFragments", numBuckets,
-	// 	"receivedFragments", receivedFragments,
-	// 	"totalTransactions", totalTransactions,
-	// 	"collectionDurationNs",
-	// 	collectionDuration.Nanoseconds(),
-	// 	"collectionDurationUs",
-	// 	collectionDuration.Microseconds(),
-	// )
-	// ============================================================
-	// 1. FRAGMENT RETRIEVAL / LOOKUP TIMING
+	// 1. FRAGMENT COLLECTION
 	// ============================================================
 
 	collectionDuration = 0
@@ -342,10 +280,23 @@ func (miner *Miner) applyVerifiedFragments(
 		bucket   uint32
 		txs      []*types.Transaction
 		wantRoot common.Hash
+		meta     FragmentMeta
+		bytes    int
 	}
 
 	fragments :=
 		make([]collectedFragment, 0, numBuckets)
+
+	missing := make([]uint32, 0)
+
+	// Arrival tracking. These stamps are taken on this node when a fragment
+	// landed, so they are comparable with each other even though the leaders'
+	// own clocks are not.
+	var (
+		firstArrival    time.Time
+		lastArrival     time.Time
+		stragglerBucket = -1
+	)
 
 	for bucket := uint32(0); bucket < numBuckets; bucket++ {
 
@@ -372,7 +323,30 @@ func (miner *Miner) applyVerifiedFragments(
 		)
 
 		if !ok || len(txs) == 0 {
+			missing = append(missing, bucket)
 			continue
+		}
+
+		meta, _ := fp.GetFragmentMeta(bucket)
+
+		if !meta.ReceivedAt.IsZero() {
+			if firstArrival.IsZero() || meta.ReceivedAt.Before(firstArrival) {
+				firstArrival = meta.ReceivedAt
+			}
+			if meta.ReceivedAt.After(lastArrival) {
+				lastArrival = meta.ReceivedAt
+				stragglerBucket = int(bucket)
+			}
+		}
+
+		// Wire size is recorded on arrival; fall back to the encoded tx sizes.
+		fragmentBytes := meta.Bytes
+		if fragmentBytes == 0 {
+			for _, tx := range txs {
+				if tx != nil {
+					fragmentBytes += int(tx.Size())
+				}
+			}
 		}
 
 		receivedFragments++
@@ -384,15 +358,37 @@ func (miner *Miner) applyVerifiedFragments(
 				bucket:   bucket,
 				txs:      txs,
 				wantRoot: wantRoot,
+				meta:     meta,
+				bytes:    fragmentBytes,
 			},
 		)
+	}
+
+	// A fragment that never arrived is a silent transaction loss, so record one
+	// row per missing bucket too.
+	for _, bucket := range missing {
+		RecordFragmentApplyMetric(FragmentApplyMetric{
+			TimestampUTC: time.Now().UTC().Format(time.RFC3339Nano),
+			Role:         "proposer",
+			Hostname:     hostname,
+			BlockNumber:  blockNumber,
+			NumBuckets:   numBuckets,
+			BucketID:     bucket,
+			Outcome:      "missing",
+			Reason:       "no fragment at merge time",
+		})
 	}
 
 	log.Info(
 		"FINAL VALIDATOR FRAGMENT COLLECTION COMPLETE",
 		"expectedFragments", numBuckets,
 		"receivedFragments", receivedFragments,
+		"missingFragments", len(missing),
 		"totalTransactions", totalTransactions,
+		"firstArrival", fragmentStampOrEmpty(firstArrival),
+		"lastArrival", fragmentStampOrEmpty(lastArrival),
+		"stragglerBucket", stragglerBucket,
+		"arrivalSpreadUs", fragmentArrivalSpread(firstArrival, lastArrival).Microseconds(),
 		"collectionDurationNs",
 		collectionDuration.Nanoseconds(),
 		"collectionDurationUs",
@@ -400,14 +396,12 @@ func (miner *Miner) applyVerifiedFragments(
 	)
 
 	// ============================================================
-	// 2. FRAGMENT MERGE / VERIFY / EXECUTION TIMING
-	// ============================================================
-
-	// ============================================================
-	// 2. FRAGMENT VERIFY / EXECUTE / MERGE TIMING
+	// 2. FRAGMENT VERIFY / EXECUTE / MERGE
 	// ============================================================
 
 	mergeDuration = 0
+
+	mergeStart := time.Now()
 
 	acceptedFragments := 0
 	rejectedFragments := 0
@@ -424,8 +418,26 @@ func (miner *Miner) applyVerifiedFragments(
 
 		snap := env.state.Snapshot()
 		gp := env.gasPool.Gas()
+		gasUsedBefore := env.header.GasUsed
+
+		// Everything a rejected fragment has to give back. Reverting the state
+		// alone would leave its transactions and receipts in the block.
+		txsBefore := len(env.txs)
+		receiptsBefore := len(env.receipts)
+		sizeBefore := env.size
+		countBefore := env.tcount
 
 		okFrag := true
+
+		var (
+			reason       string
+			failingTx    string
+			gotRoot      common.Hash
+			executedTxs  int
+			rootDuration time.Duration
+		)
+
+		execStart := time.Now()
 
 		for _, tx := range fragment.txs {
 
@@ -435,6 +447,8 @@ func (miner *Miner) applyVerifiedFragments(
 
 			if !env.txFitsSize(tx) {
 				okFrag = false
+				reason = "block size limit"
+				failingTx = tx.Hash().Hex()
 
 				log.Debug(
 					"Fragment rejected: block size limit",
@@ -464,19 +478,30 @@ func (miner *Miner) applyVerifiedFragments(
 				)
 
 				okFrag = false
+				reason = "transaction execution failed: " + err.Error()
+				failingTx = tx.Hash().Hex()
+
 				break
 			}
+
+			executedTxs++
 		}
+
+		execDuration := time.Since(execStart)
 
 		// Verify fragment state root.
 		if okFrag {
 
-			gotRoot :=
+			rootStart := time.Now()
+
+			gotRoot =
 				env.state.IntermediateRoot(
 					miner.chainConfig.IsEIP158(
 						env.header.Number,
 					),
 				)
+
+			rootDuration = time.Since(rootStart)
 
 			if gotRoot != fragment.wantRoot {
 
@@ -488,18 +513,25 @@ func (miner *Miner) applyVerifiedFragments(
 				)
 
 				okFrag = false
+				reason = "root mismatch"
 			}
 		}
+
+		fragmentGas := env.header.GasUsed - gasUsedBefore
 
 		if !okFrag {
 
 			env.state.RevertToSnapshot(snap)
 			env.gasPool.SetGas(gp)
+			env.header.GasUsed = gasUsedBefore
+			env.txs = env.txs[:txsBefore]
+			env.receipts = env.receipts[:receiptsBefore]
+			env.size = sizeBefore
+			env.tcount = countBefore
 
 			rejectedFragments++
 
 		} else {
-
 			acceptedFragments++
 		}
 
@@ -509,209 +541,85 @@ func (miner *Miner) applyVerifiedFragments(
 		// Pure fragment processing time.
 		mergeDuration += bucketDuration
 
+		waitDuration := time.Duration(0)
+		if !fragment.meta.ReceivedAt.IsZero() {
+			waitDuration = mergeStart.Sub(fragment.meta.ReceivedAt)
+		}
+
+		outcome := "accepted"
+		if !okFrag {
+			outcome = "rejected"
+		}
+
 		log.Info(
 			"FINAL VALIDATOR FRAGMENT APPLY",
 			"bucket", fragment.bucket,
 			"txs", len(fragment.txs),
+			"bytes", fragment.bytes,
 			"accepted", okFrag,
+			"reason", reason,
+			"executedTxs", executedTxs,
+			"gasUsed", fragmentGas,
+			"waitDurationUs", waitDuration.Microseconds(),
+			"execDurationUs", execDuration.Microseconds(),
+			"rootCheckDurationUs", rootDuration.Microseconds(),
 			"durationNs",
 			bucketDuration.Nanoseconds(),
 			"durationUs",
 			bucketDuration.Microseconds(),
 		)
+
+		wantRootHex := fragment.wantRoot.Hex()
+		gotRootHex := ""
+		if (gotRoot != common.Hash{}) {
+			gotRootHex = gotRoot.Hex()
+		}
+
+		RecordFragmentApplyMetric(FragmentApplyMetric{
+			TimestampUTC: time.Now().UTC().Format(time.RFC3339Nano),
+			Role:         "proposer",
+			Hostname:     hostname,
+
+			BlockNumber: blockNumber,
+			NumBuckets:  numBuckets,
+			BucketID:    fragment.bucket,
+
+			Txs:     len(fragment.txs),
+			Bytes:   fragment.bytes,
+			GasUsed: fragmentGas,
+
+			Outcome:   outcome,
+			Reason:    reason,
+			FailingTx: failingTx,
+			WantRoot:  wantRootHex,
+			GotRoot:   gotRootHex,
+
+			ReceivedAtUTC:     fragmentStampOrEmpty(fragment.meta.ReceivedAt),
+			MergeStartUTC:     mergeStart.UTC().Format(time.RFC3339Nano),
+			WaitDuration:      waitDuration,
+			ExecDuration:      execDuration,
+			RootCheckDuration: rootDuration,
+			TotalDuration:     bucketDuration,
+
+			ExecutedTxs:      executedTxs,
+			GasPoolRemaining: env.gasPool.Gas(),
+		})
 	}
 
 	log.Info(
 		"FINAL VALIDATOR FRAGMENT MERGE COMPLETE",
 		"receivedFragments", receivedFragments,
+		"missingFragments", len(missing),
 		"acceptedFragments", acceptedFragments,
 		"rejectedFragments", rejectedFragments,
 		"totalTransactions", totalTransactions,
+		"stragglerBucket", stragglerBucket,
+		"blockGasUsed", env.header.GasUsed,
 		"mergeDurationNs",
 		mergeDuration.Nanoseconds(),
 		"mergeDurationUs",
 		mergeDuration.Microseconds(),
 	)
-	// mergeStart := time.Now()
-
-	// acceptedFragments := 0
-	// rejectedFragments := 0
-
-	// for _, fragment := range fragments {
-
-	// 	bucketStart := time.Now()
-
-	// 	log.Debug(
-	// 		"Overlay merge: applying fragment",
-	// 		"bucket", fragment.bucket,
-	// 		"txs", len(fragment.txs),
-	// 	)
-
-	// 	snap := env.state.Snapshot()
-	// 	gp := env.gasPool.Gas()
-
-	// 	okFrag := true
-
-	// 	for _, tx := range fragment.txs {
-
-	// 		if tx == nil {
-	// 			continue
-	// 		}
-
-	// 		if !env.txFitsSize(tx) {
-	// 			okFrag = false
-
-	// 			log.Debug(
-	// 				"Fragment rejected: block size limit",
-	// 				"bucket", fragment.bucket,
-	// 				"hash", tx.Hash(),
-	// 			)
-
-	// 			break
-	// 		}
-
-	// 		// ====================================================
-	// 		// ADDRESS POLICY CHECK
-	// 		// ====================================================
-
-	// 		if pol := txpool.GetAddressPolicy();
-	// 			pol != nil && pol.Enabled {
-
-	// 			if to := tx.To(); to == nil {
-
-	// 				if err :=
-	// 					pol.CheckTxAdmission(
-	// 						nil,
-	// 						tx.Data(),
-	// 					); err != nil {
-
-	// 					log.Debug(
-	// 						"Rejecting fragment tx by address policy",
-	// 						"bucket", fragment.bucket,
-	// 						"hash", tx.Hash(),
-	// 						"err", err,
-	// 					)
-
-	// 					okFrag = false
-	// 					break
-	// 				}
-
-	// 			} else {
-
-	// 				if err :=
-	// 					pol.CheckCallTargetRuntime(
-	// 						env.state,
-	// 						*to,
-	// 					); err != nil {
-
-	// 					log.Debug(
-	// 						"Rejecting fragment tx by address policy",
-	// 						"bucket", fragment.bucket,
-	// 						"hash", tx.Hash(),
-	// 						"to", *to,
-	// 						"err", err,
-	// 					)
-
-	// 					okFrag = false
-	// 					break
-	// 				}
-	// 			}
-	// 		}
-
-	// 		// ====================================================
-	// 		// EXECUTE TRANSACTION
-	// 		// ====================================================
-
-	// 		env.state.SetTxContext(
-	// 			tx.Hash(),
-	// 			env.tcount,
-	// 		)
-
-	// 		if err :=
-	// 			miner.commitTransaction(
-	// 				env,
-	// 				tx,
-	// 			); err != nil {
-
-	// 			log.Debug(
-	// 				"Fragment transaction execution failed",
-	// 				"bucket", fragment.bucket,
-	// 				"hash", tx.Hash(),
-	// 				"err", err,
-	// 			)
-
-	// 			okFrag = false
-	// 			break
-	// 		}
-	// 	}
-
-	// 	// ========================================================
-	// 	// VERIFY FRAGMENT STATE ROOT
-	// 	// ========================================================
-
-	// 	if okFrag {
-
-	// 		gotRoot :=
-	// 			env.state.IntermediateRoot(
-	// 				miner.chainConfig.IsEIP158(
-	// 					env.header.Number,
-	// 				),
-	// 			)
-
-	// 		if gotRoot != fragment.wantRoot {
-
-	// 			log.Debug(
-	// 				"Fragment root mismatch",
-	// 				"bucket", fragment.bucket,
-	// 				"wantRoot", fragment.wantRoot,
-	// 				"gotRoot", gotRoot,
-	// 			)
-
-	// 			okFrag = false
-	// 		}
-	// 	}
-
-	// 	if !okFrag {
-
-	// 		env.state.RevertToSnapshot(snap)
-	// 		env.gasPool.SetGas(gp)
-
-	// 		rejectedFragments++
-
-	// 	} else {
-
-	// 		acceptedFragments++
-	// 	}
-
-	// 	bucketDuration :=
-	// 		time.Since(bucketStart)
-
-	// 	log.Info(
-	// 		"FINAL VALIDATOR FRAGMENT APPLY",
-	// 		"bucket", fragment.bucket,
-	// 		"txs", len(fragment.txs),
-	// 		"accepted", okFrag,
-	// 		"durationNs",
-	// 		bucketDuration.Nanoseconds(),
-	// 		"durationUs",
-	// 		bucketDuration.Microseconds(),
-	// 	)
-	// }
-
-	// mergeDuration =
-	// 	time.Since(mergeStart)
-
-	// log.Info(
-	// 	"FINAL VALIDATOR FRAGMENT MERGE COMPLETE",
-	// 	"receivedFragments", receivedFragments,
-	// 	"acceptedFragments", acceptedFragments,
-	// 	"rejectedFragments", rejectedFragments,
-	// 	"totalTransactions", totalTransactions,
-	// 	"mergeDurationNs",
-	// 	mergeDuration.Nanoseconds(),
-	// 	"mergeDurationUs",
-	// 	mergeDuration.Microseconds(),
-	// )
 
 	return
 }

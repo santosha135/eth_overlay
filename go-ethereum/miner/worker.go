@@ -445,51 +445,6 @@ func (miner *Miner) applyVerifiedFragments(
 				break
 			}
 
-			// Address-policy verification.
-			if pol := txpool.GetAddressPolicy();
-				pol != nil && pol.Enabled {
-
-				if to := tx.To(); to == nil {
-
-					if err :=
-						pol.CheckTxAdmission(
-							nil,
-							tx.Data(),
-						); err != nil {
-
-						log.Debug(
-							"Rejecting fragment tx by address policy",
-							"bucket", fragment.bucket,
-							"hash", tx.Hash(),
-							"err", err,
-						)
-
-						okFrag = false
-						break
-					}
-
-				} else {
-
-					if err :=
-						pol.CheckCallTargetRuntime(
-							env.state,
-							*to,
-						); err != nil {
-
-						log.Debug(
-							"Rejecting fragment tx by address policy",
-							"bucket", fragment.bucket,
-							"hash", tx.Hash(),
-							"to", *to,
-							"err", err,
-						)
-
-						okFrag = false
-						break
-					}
-				}
-			}
-
 			env.state.SetTxContext(
 				tx.Hash(),
 				env.tcount,

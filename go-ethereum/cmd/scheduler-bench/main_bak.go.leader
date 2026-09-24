@@ -1,0 +1,548 @@
+package main
+
+import (
+	"encoding/csv"
+	"fmt"
+	"os"
+	"path/filepath"
+	"runtime"
+	"strconv"
+	"time"
+
+	"github.com/ethereum/go-ethereum/src/bucket"
+)
+
+// ================================================================
+// CONFIGURATION
+// ================================================================
+
+const (
+	// ------------------------------------------------------------
+	// FIXED NUMBER OF BUCKETS
+	// ------------------------------------------------------------
+	numBuckets = 5
+
+	// ------------------------------------------------------------
+	// NUMBER OF INDEPENDENT EXPERIMENTAL RUNS
+	// ------------------------------------------------------------
+	independentRuns = 5
+
+	// ------------------------------------------------------------
+	// NUMBER OF LeaderIndex CALLS INSIDE ONE TIMED BATCH
+	// ------------------------------------------------------------
+	//
+	// LeaderIndex is extremely fast, so timing one operation
+	// individually would introduce too much timer overhead.
+	//
+	callsPerBatch = 10000
+
+	// ------------------------------------------------------------
+	// NUMBER OF TIMED BATCHES FOR EACH MINER
+	// ------------------------------------------------------------
+	batches = 1000
+
+	// ------------------------------------------------------------
+	// WARM-UP CALLS BEFORE MEASUREMENT
+	// ------------------------------------------------------------
+	warmupCalls = 100000
+)
+
+// Prevent the compiler from optimizing away LeaderIndex().
+var leaderSink int
+
+// ================================================================
+// MAIN
+// ================================================================
+
+func main() {
+
+	// ============================================================
+	// SCALABILITY CONFIGURATIONS
+	// ============================================================
+	//
+	// Buckets remain fixed at 5.
+	//
+	// Nodes/bucket    Total nodes
+	// --------------------------------
+	//      2              10
+	//      3              15
+	//      6              30
+	//     10              50
+	//     20             100
+	//     30             150
+	//     50             250
+	//    100             500
+	//
+
+	nodesPerBucketValues := []int{
+		2,
+		3,
+		6,
+		10,
+		20,
+		30,
+		50,
+		100,
+	}
+
+	// ============================================================
+	// PRINT BENCHMARK CONFIGURATION
+	// ============================================================
+
+	fmt.Println("============================================================")
+	fmt.Println("LEADER SELECTION SCALABILITY BENCHMARK")
+	fmt.Println("============================================================")
+
+	fmt.Printf("Fixed buckets      : %d\n", numBuckets)
+	fmt.Printf("Independent runs   : %d\n", independentRuns)
+	fmt.Printf("Calls per batch    : %d\n", callsPerBatch)
+	fmt.Printf("Batches per miner  : %d\n", batches)
+	fmt.Printf("Warm-up calls      : %d\n", warmupCalls)
+
+	fmt.Println()
+	fmt.Println("Scalability configurations:")
+	fmt.Println()
+
+	for _, nodesPerBucket := range nodesPerBucketValues {
+
+		totalMiners :=
+			numBuckets * nodesPerBucket
+
+		fmt.Printf(
+			"  %3d nodes/bucket x %d buckets = %3d total miners\n",
+			nodesPerBucket,
+			numBuckets,
+			totalMiners,
+		)
+	}
+
+	// ============================================================
+	// INDEPENDENT RUNS
+	// ============================================================
+
+	for run := 1; run <= independentRuns; run++ {
+
+		// --------------------------------------------------------
+		// CREATE DIRECTORY FOR THIS INDEPENDENT RUN
+		// --------------------------------------------------------
+
+		runDir := fmt.Sprintf(
+			"run_%02d",
+			run,
+		)
+
+		err := os.MkdirAll(
+			runDir,
+			0755,
+		)
+
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Println()
+		fmt.Println("============================================================")
+		fmt.Printf(
+			"INDEPENDENT RUN %d / %d\n",
+			run,
+			independentRuns,
+		)
+		fmt.Println("============================================================")
+
+		// ========================================================
+		// RUN EVERY SYSTEM SIZE
+		// ========================================================
+
+		for _, nodesPerBucket :=
+			range nodesPerBucketValues {
+
+			totalMiners :=
+				numBuckets * nodesPerBucket
+
+			fmt.Println()
+			fmt.Println(
+				"------------------------------------------------------------",
+			)
+
+			fmt.Printf(
+				"Independent run : %d\n",
+				run,
+			)
+
+			fmt.Printf(
+				"Buckets         : %d\n",
+				numBuckets,
+			)
+
+			fmt.Printf(
+				"Nodes/bucket    : %d\n",
+				nodesPerBucket,
+			)
+
+			fmt.Printf(
+				"Total miners    : %d\n",
+				totalMiners,
+			)
+
+			fmt.Println(
+				"------------------------------------------------------------",
+			)
+
+			// ----------------------------------------------------
+			// Run garbage collection BEFORE the configuration.
+			//
+			// GC is NOT included in the timed region.
+			// ----------------------------------------------------
+
+			runtime.GC()
+
+			// ----------------------------------------------------
+			// RUN LEADER-SELECTION BENCHMARK
+			// ----------------------------------------------------
+
+			runLeaderBenchmark(
+				run,
+				runDir,
+				nodesPerBucket,
+				totalMiners,
+			)
+		}
+	}
+
+	// Make benchmark output observable.
+	runtime.KeepAlive(leaderSink)
+
+	fmt.Println()
+	fmt.Println("============================================================")
+	fmt.Println("ALL BENCHMARK RUNS FINISHED")
+	fmt.Println("============================================================")
+}
+
+// ================================================================
+// LEADER SELECTION BENCHMARK
+// ================================================================
+
+func runLeaderBenchmark(
+	run int,
+	runDir string,
+	nodesPerBucket int,
+	totalMiners int,
+) {
+
+	// ============================================================
+	// OUTPUT FILE
+	// ============================================================
+
+	filename := filepath.Join(
+		runDir,
+		fmt.Sprintf(
+			"leader_selection_%d_nodes_per_bucket.csv",
+			nodesPerBucket,
+		),
+	)
+
+	// ============================================================
+	// CREATE CSV FILE
+	// ============================================================
+
+	file, err := os.Create(filename)
+
+	if err != nil {
+		panic(err)
+	}
+
+	defer file.Close()
+
+	writer := csv.NewWriter(file)
+
+	defer writer.Flush()
+
+	// ============================================================
+	// CSV HEADER
+	// ============================================================
+
+	err = writer.Write([]string{
+		"independent_run",
+		"batch",
+		"num_buckets",
+		"nodes_per_bucket",
+		"total_miners",
+		"miner_index",
+		"group_id",
+		"member_index",
+		"group_size",
+		"calls_per_batch",
+		"start_epoch",
+		"total_duration_ns",
+		"duration_ns_per_call",
+	})
+
+	if err != nil {
+		panic(err)
+	}
+
+	// ============================================================
+	// BENCHMARK INFORMATION
+	// ============================================================
+
+	fmt.Printf(
+		"\nLeader benchmark started:\n"+
+			"  Run          = %d\n"+
+			"  Buckets      = %d\n"+
+			"  Nodes/bucket = %d\n"+
+			"  Total miners = %d\n",
+		run,
+		numBuckets,
+		nodesPerBucket,
+		totalMiners,
+	)
+
+	// ============================================================
+	// BENCHMARK EVERY MINER
+	// ============================================================
+
+	for minerIndex := 0;
+		minerIndex < totalMiners;
+		minerIndex++ {
+
+		// --------------------------------------------------------
+		// DETERMINE MINER'S BUCKET/GROUP
+		// --------------------------------------------------------
+
+		groupID,
+			memberIndex,
+			groupSize :=
+			bucket.BuildMinerGroupAssignment(
+				minerIndex,
+				totalMiners,
+				numBuckets,
+			)
+
+		// ========================================================
+		// SANITY CHECK
+		// ========================================================
+		//
+		// Because:
+		//
+		// totalMiners =
+		//     numBuckets * nodesPerBucket
+		//
+		// every bucket should contain exactly the requested
+		// number of nodes.
+		//
+
+		if groupSize != nodesPerBucket {
+
+			panic(
+				fmt.Sprintf(
+					"Unexpected group size: "+
+						"run=%d miner=%d expected=%d got=%d",
+					run,
+					minerIndex,
+					nodesPerBucket,
+					groupSize,
+				),
+			)
+		}
+
+		// ========================================================
+		// PRINT ASSIGNMENT
+		// ========================================================
+
+		fmt.Printf(
+			"Miner %3d -> "+
+				"group=%d "+
+				"member=%3d "+
+				"groupSize=%3d\n",
+			minerIndex,
+			groupID,
+			memberIndex,
+			groupSize,
+		)
+
+		// ========================================================
+		// WARM-UP
+		// ========================================================
+		//
+		// Warm-up is intentionally OUTSIDE the timed region.
+		//
+
+		for i := 0;
+			i < warmupCalls;
+			i++ {
+
+			leaderSink =
+				bucket.LeaderIndex(
+					uint64(i),
+					groupID,
+					groupSize,
+				)
+		}
+
+		// ========================================================
+		// TIMED BATCHES
+		// ========================================================
+
+		for batch := 0;
+			batch < batches;
+			batch++ {
+
+			startEpoch :=
+				uint64(
+					batch *
+						callsPerBatch,
+				)
+
+			// ====================================================
+			// TIMER START
+			// ====================================================
+
+			start := time.Now()
+
+			// ----------------------------------------------------
+			// Multiple calls are timed together.
+			// ----------------------------------------------------
+
+			for j := 0;
+				j < callsPerBatch;
+				j++ {
+
+				epoch :=
+					startEpoch +
+						uint64(j)
+
+				leaderSink =
+					bucket.LeaderIndex(
+						epoch,
+						groupID,
+						groupSize,
+					)
+			}
+
+			// ====================================================
+			// TIMER STOP
+			// ====================================================
+
+			elapsed :=
+				time.Since(start)
+
+			totalDurationNS :=
+				elapsed.Nanoseconds()
+
+			// ----------------------------------------------------
+			// Average time for ONE LeaderIndex call
+			// ----------------------------------------------------
+
+			nsPerCall :=
+				float64(totalDurationNS) /
+					float64(callsPerBatch)
+
+			// ====================================================
+			// WRITE RESULT
+			// ====================================================
+			//
+			// CSV writing occurs AFTER timing, therefore disk I/O
+			// is not included in the LeaderIndex measurement.
+			//
+
+			err := writer.Write([]string{
+
+				// Independent run
+				strconv.Itoa(run),
+
+				// Batch
+				strconv.Itoa(batch),
+
+				// Number of buckets
+				strconv.Itoa(
+					numBuckets,
+				),
+
+				// Nodes per bucket
+				strconv.Itoa(
+					nodesPerBucket,
+				),
+
+				// Total miners
+				strconv.Itoa(
+					totalMiners,
+				),
+
+				// Miner index
+				strconv.Itoa(
+					minerIndex,
+				),
+
+				// Group ID
+				strconv.Itoa(
+					groupID,
+				),
+
+				// Member index
+				strconv.Itoa(
+					memberIndex,
+				),
+
+				// Group size
+				strconv.Itoa(
+					groupSize,
+				),
+
+				// Calls per batch
+				strconv.Itoa(
+					callsPerBatch,
+				),
+
+				// Starting epoch
+				strconv.FormatUint(
+					startEpoch,
+					10,
+				),
+
+				// Total duration
+				strconv.FormatInt(
+					totalDurationNS,
+					10,
+				),
+
+				// Average ns/call
+				strconv.FormatFloat(
+					nsPerCall,
+					'f',
+					6,
+					64,
+				),
+			})
+
+			if err != nil {
+				panic(err)
+			}
+		}
+	}
+
+	// ============================================================
+	// FLUSH CSV
+	// ============================================================
+
+	writer.Flush()
+
+	if err := writer.Error(); err != nil {
+		panic(err)
+	}
+
+	// ============================================================
+	// FINISHED
+	// ============================================================
+
+	fmt.Printf(
+		"\nRun %d | %d nodes/bucket | %d total miners finished\n",
+		run,
+		nodesPerBucket,
+		totalMiners,
+	)
+
+	fmt.Printf(
+		"Saved -> %s\n",
+		filename,
+	)
+}

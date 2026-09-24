@@ -194,10 +194,10 @@ RAW_TX_FILE = os.getenv(
 )
 
 START_INDEX = int(os.getenv("START_INDEX", "0"))
-LIMIT_ROWS = int(os.getenv("LIMIT_ROWS", "38000"))
+LIMIT_ROWS = int(os.getenv("LIMIT_ROWS", "10000"))
 
 # Example: TX_PER_SECOND=10 means wait 1/10 = 0.1 sec between replay tx sends.
-TX_PER_SECOND = float(os.getenv("TX_PER_SECOND", "10"))
+TX_PER_SECOND = float(os.getenv("TX_PER_SECOND", "25"))
 SEND_INTERVAL_SEC = 1.0 / TX_PER_SECOND if TX_PER_SECOND > 0 else 0.0
 
 

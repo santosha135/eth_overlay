@@ -171,7 +171,7 @@ SUCCESSFUL_CALL_MAP = {
 # =========================
 # SYSTEM PARAMETERS
 # =========================
-GETH_URL = os.getenv("GETH_URL", "http://el-20-geth-lighthouse:8545")
+GETH_URL = os.getenv("GETH_URL", "http://el-10-geth-lighthouse:8545")
 MASTER_PRIVATE_KEY = os.getenv(
     "MASTER_PRIVATE_KEY",
     "850643a0224065ecce3882673c21f56bcf6eef86274cc21cadff15930b59fc8c",
@@ -186,18 +186,18 @@ OUTPUT_XLSX = os.getenv("OUTPUT_XLSX", f"replay_phased_fixed_metrics_{SCRIPT_ID}
 # ACCOUNT_MAP_FILE = os.getenv("ACCOUNT_MAP_FILE", "csv_sender_replacement_map.json")
 ACCOUNT_MAP_FILE = (
     f"csv_sender_replacement_map_{SCRIPT_ID}.json"
-)
+)   
 
 RAW_TX_FILE = os.getenv(
     "RAW_TX_FILE",
     f"transactions_{SCRIPT_ID}.txt"
 )
 
-START_INDEX = int(os.getenv("START_INDEX", "342000"))
-LIMIT_ROWS = int(os.getenv("LIMIT_ROWS", "38000"))
+START_INDEX = int(os.getenv("START_INDEX", "90000"))
+LIMIT_ROWS = int(os.getenv("LIMIT_ROWS", "10000"))
 
 # Example: TX_PER_SECOND=10 means wait 1/10 = 0.1 sec between replay tx sends.
-TX_PER_SECOND = float(os.getenv("TX_PER_SECOND", "10"))
+TX_PER_SECOND = float(os.getenv("TX_PER_SECOND", "25"))
 SEND_INTERVAL_SEC = 1.0 / TX_PER_SECOND if TX_PER_SECOND > 0 else 0.0
 
 

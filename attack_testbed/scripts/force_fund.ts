@@ -6,7 +6,7 @@ async function main(): Promise<void> {
         "0xb4B46bdAA835F8E4b4d8e208B6559cD267851051";
 
     // Amount to transfer into the smart contract
-    const amountToFund = ethers.parseEther("100");
+    const amountToFund = ethers.parseEther("1000");
 
     const [sender] = await ethers.getSigners();
 

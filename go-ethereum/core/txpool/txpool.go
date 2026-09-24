@@ -254,7 +254,7 @@ func New(gasTip uint64, chain BlockChain, subpools []SubPool) (*TxPool, error) {
 	// pool.leaderGating = getenvBool("GETH_SCHED_LEADER_GATING", false)
 	// pool.groupSize = getenvInt("GETH_SCHED_GROUP_SIZE", 10)
 	// pool.myMemberIndex = getenvInt("GETH_SCHED_MEMBER_INDEX", pool.groupID)
-	pool.numBuckets = getenvInt("GETH_SCHED_NUM_BUCKETS", 10)
+	pool.numBuckets = getenvInt("GETH_SCHED_NUM_BUCKETS", 15)
 	pool.rotationBlocks = uint64(getenvInt("GETH_SCHED_ROTATION_BLOCKS", 1))
 
 	pool.leaderGating = getenvBool("GETH_SCHED_LEADER_GATING", true)
